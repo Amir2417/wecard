@@ -269,6 +269,7 @@
                             setRoute('admin.setup.sections.section','work-section'),
                             setRoute('admin.setup.sections.section','statistics-section'),
                             setRoute('admin.setup.sections.section','service-section'),
+                            setRoute('admin.setup.sections.section','download-app'),
                             setRoute('admin.setup.sections.section','testimonials-section'),
                             setRoute('admin.setup.sections.section','start-section'),
                             setRoute('admin.setup.sections.section','category'),
@@ -309,7 +310,10 @@
                                     <i class="menu-icon las la-ellipsis-h"></i>
                                     <span class="menu-title">{{ __("Service Section") }}</span>
                                 </a>
-
+                                <a href="{{ setRoute('admin.setup.sections.section','download-app') }}" class="nav-link @if ($current_url == setRoute('admin.setup.sections.section','download-app')) active @endif">
+                                    <i class="menu-icon las la-ellipsis-h"></i>
+                                    <span class="menu-title">{{ __("Download App Section") }}</span>
+                                </a>
                                 <a href="{{ setRoute('admin.setup.sections.section','testimonials-section') }}" class="nav-link @if ($current_url == setRoute('admin.setup.sections.section','testimonials-section')) active @endif">
                                     <i class="menu-icon las la-ellipsis-h"></i>
                                     <span class="menu-title">{{ __("Testimonials Section") }}</span>

@@ -75,6 +75,13 @@ class SetupSectionsController extends Controller
                 'itemUpdate'    => "serviceItemUpdate",
                 'itemDelete'    => "serviceItemDelete",
             ],
+            'download-app'      => [
+                'view'          => "downloadAppView",
+                'update'        => "downloadAppUpdate",
+                'itemStore'     => "downloadAppItemStore",
+                'itemUpdate'    => "downloadAppItemUpdate",
+                'itemDelete'    => "downloadAppItemDelete"
+            ],
             'testimonials-section'  => [
                 'view'      => "testimonialView",
                 'update'    => "testimonialUpdate",
@@ -662,6 +669,206 @@ class SetupSectionsController extends Controller
         return back()->with(['success' => ['Item delete successfully!']]);
     }
 //=======================Work  Section End===================================
+/**
+     * Method for show download app section
+     * @param string $slug
+     * @param \Illuminate\Http\Request $request
+     */
+    public function downloadAppView($slug){
+        $page_title     = "Download App Section";
+        $section_slug   = Str::slug(SiteSectionConst::DOWNLOAD_APP_SECTION);
+        $data           = SiteSections::getData($section_slug)->first();
+        $languages      = $this->languages;
+
+        return view('admin.sections.setup-sections.download-app-section',compact(
+            'page_title',
+            'data',
+            'languages',
+            'slug'
+        ));
+    }
+    /**
+     * Method for update download app section
+     * @param string
+     * @param \Illuminate\\Http\Request $request
+     */
+    
+     public function downloadAppUpdate(Request $request,$slug){
+        $basic_field_name = [
+            'title'       => 'required|string|max:100',
+            'heading'     => 'required|string|max:100',
+            'sub_heading' => 'required|string',
+        ];
+
+        $slug             = Str::slug(SiteSectionConst::DOWNLOAD_APP_SECTION);
+        $section          = SiteSections::where("key",$slug)->first();
+
+        if($section      != null){
+            $data         = json_decode(json_encode($section->value),true);
+        }else{
+            $data         = [];
+        }
+        $validator  = Validator::make($request->all(),[
+            'image'            => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
+        ]);
+        if($validator->fails()) return back()->withErrors($validator->errors())->withInput();
+
+        $validated = $validator->validate();
+       
+        $data['image']    = $section->value->image ?? "";
+
+        if($request->hasFile("image")){
+            $data['image']= $this->imageValidate($request,"image",$section->value->image ?? null);
+        }
+
+        $data['language']     = $this->contentValidate($request,$basic_field_name);
+        $update_data['key']   = $slug;
+        $update_data['value'] = $data;
+        try{
+            SiteSections::updateOrCreate(['key' => $slug],$update_data);
+        }catch(Exception $e){
+            return back()->with(['error' => ['Something went wrong! Please try again.']]);
+        }
+        return back()->with( ['success' => ['Section Updated Successfully!']]);
+
+    }
+    /**
+     * Method for store download app item
+     * @param string $slug
+     * @param \Illuminate\Http\Request  $request
+    */
+    public function downloadAppItemStore(Request $request,$slug) {
+        $basic_field_name = [
+            'item_title'    => "required|string|max:2555",
+            'item_heading'  => "required|string|max:2555",
+        ];
+
+        $language_wise_data = $this->contentValidate($request,$basic_field_name,"download-app-add");
+        if($language_wise_data instanceof RedirectResponse) return $language_wise_data;
+        $slug    = Str::slug(SiteSectionConst::DOWNLOAD_APP_SECTION);
+        $section = SiteSections::where("key",$slug)->first();
+
+        if($section != null) {
+            $section_data = json_decode(json_encode($section->value),true);
+        }else {
+            $section_data = [];
+        }
+        $unique_id = uniqid();
+
+        $validator  = Validator::make($request->all(),[
+            'link'              => "required|url",
+            'image'           => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
+        ]);
+
+        if($validator->fails()) return back()->withErrors($validator->errors())->withInput()->with('modal','download-app-add');
+        $validated = $validator->validate();
+
+        $section_data['items'][$unique_id]['language']     = $language_wise_data;
+        $section_data['items'][$unique_id]['id']           = $unique_id;
+        $section_data['items'][$unique_id]['image']        = "";
+        $section_data['items'][$unique_id]['link']        = $validated['link'];
+        $section_data['items'][$unique_id]['created_at']   = now();
+        if($request->hasFile("image")) {
+            $section_data['items'][$unique_id]['image']    = $this->imageValidate($request,"image",$section->value->items->image ?? null);
+        }
+
+        $update_data['key']     = $slug;
+        $update_data['value']   = $section_data;
+        try{
+            SiteSections::updateOrCreate(['key' => $slug],$update_data);
+        }catch(Exception $e) {
+            return back()->with(['error' => ['Something went worng! Please try again']]);
+        }
+
+        return back()->with(['success' => ['Section item added successfully!']]);
+    }
+    /**
+     * Method for update download app item
+     * @param string $slug
+     * @return view
+     */
+    public function downloadAppItemUpdate(Request $request,$slug){
+        $request->validate([
+            'target'           => 'required|string',
+        ]);
+
+        $basic_field_name      = [
+            'item_title_edit'     => "required|string|max:2555",
+            'item_heading_edit'     => "required|string|max:2555",
+        ];
+
+        
+
+        $slug    = Str::slug(SiteSectionConst::DOWNLOAD_APP_SECTION);
+        $section = SiteSections::getData($slug)->first();
+        if(!$section) return back()->with(['error' => ['Section not found!']]);
+        $section_values = json_decode(json_encode($section->value),true);
+        if(!isset($section_values['items'])) return back()->with(['error' => ['Section item not found!']]);
+        if(!array_key_exists($request->target,$section_values['items'])) return back()->with(['error' => ['Section item is invalid!']]);
+
+        $request->merge(['old_image' => $section_values['items'][$request->target]['image'] ?? null]);
+
+        $language_wise_data = $this->contentValidate($request,$basic_field_name,"download-app-edit");
+        if($language_wise_data instanceof RedirectResponse) return $language_wise_data;
+
+        $language_wise_data = array_map(function($language) {
+            return replace_array_key($language,"_edit");
+        },$language_wise_data);
+        $validator      = Validator::make($request->all(),[
+            'link'      => "required|url",
+            'image'     => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
+        ]);
+
+        if($validator->fails()) return back()->withErrors($validator->errors())->withInput()->with('modal','download-app-edit');
+        $validated = $validator->validate();
+
+        $section_values['items'][$request->target]['language']      = $language_wise_data;
+        $section_values['items'][$request->target]['link']          = $validated['link'];
+
+        if($request->hasFile("image")) {
+            $section_values['items'][$request->target]['image']    = $this->imageValidate($request,"image",$section_values['items'][$request->target]['image'] ?? null);
+        }
+        try{
+            $section->update([
+                'value' => $section_values,
+            ]);
+        }catch(Exception $e) {
+            return back()->with(['error' => ['Something went worng! Please try again']]);
+        }
+
+        return back()->with(['success' => ['Information updated successfully!']]);
+    }
+    /**
+     * Method for delete download app item
+     * @param string $slug
+     * @return view
+     */
+    public function downloadAppItemDelete(Request $request,$slug){
+        $request->validate([
+            'target'     => 'required|string',
+        ]);
+
+        $slug         = Str::slug(SiteSectionConst::DOWNLOAD_APP_SECTION);
+        $section      = SiteSections::getData($slug)->first();
+        if(!$section) return back()->with(['error' => ['Section not found!']]);
+        $section_values = json_decode(json_encode($section->value),true);
+        if(!isset($section_values['items'])) return back()->with(['error' => ['Section item not found!']]);
+        if(!array_key_exists($request->target,$section_values['items'])) return back()->with(['error' => ['Section item is invalid!']]);
+
+        try{
+            $image_name = $section_values['items'][$request->target]['image'];
+            unset($section_values['items'][$request->target]);
+            $image_path = get_files_path('site-section') . '/' . $image_name;
+            delete_file($image_path);
+            $section->update([
+                'value'    => $section_values,
+            ]);
+
+        }catch(Exception $e){
+            return back()->with(['error' => ['Something went wrong! Please try again.']]);
+        }
+        return back()->with(['success' => ['Section item deleted successfully!']]);
+    }
 //=======================Statistics  Section Start===================================
     public function statisticsView($slug) {
         $page_title = "Statistics Section";
