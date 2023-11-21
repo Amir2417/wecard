@@ -275,36 +275,36 @@ function transfer($amount,$c_account){
     }
     return $data;
 }
- function updateAccount($c_account){
-      $method = VirtualCardApi::first();
-      $secretKey = $method->config->stripe_secret_key;
-      $client_ip = request()->ip() ?? false;
+function updateAccount($c_account){
+    $method = VirtualCardApi::first();
+    $secretKey = $method->config->stripe_secret_key;
+    $client_ip = request()->ip() ?? false;
 
-      try{
-        $stripe = new \Stripe\StripeClient( $secretKey);
-        $result = $stripe->accounts->update(
-            $c_account,
-            [
-              'tos_acceptance' => [
-                'date' => time(),
-                'ip' =>  $client_ip,
-              ],
-            ]
-          );
-          $data =[
-              'status'        => true,
-              'message'       => "Account Updated",
-              'data'          => $result,
+    try{
+    $stripe = new \Stripe\StripeClient( $secretKey);
+    $result = $stripe->accounts->update(
+        $c_account,
+        [
+            'tos_acceptance' => [
+            'date' => time(),
+            'ip' =>  $client_ip,
+            ],
+        ]
+        );
+        $data =[
+            'status'        => true,
+            'message'       => "Account Updated",
+            'data'          => $result,
 
-          ];
-      }catch(Exception $e){
-          $data =[
-              'status'        => false,
-              'message'       => $e->getMessage()." [Please Contact With Stripe Support]",
-              'data'          => null,
-          ];
+        ];
+    }catch(Exception $e){
+        $data =[
+            'status'        => false,
+            'message'       => $e->getMessage()." [Please Contact With Stripe Support]",
+            'data'          => null,
+        ];
 
-      }
-      return $data;
- }
+    }
+    return $data;
+}
 

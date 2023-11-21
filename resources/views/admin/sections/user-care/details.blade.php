@@ -88,15 +88,6 @@
                     <div class="col-xl-4 col-lg-4 form-group">
                         <div class="user-action-btn-area">
                             <div class="user-action-btn">
-                                @include('admin.components.button.custom',[
-                                    'type'          => "button",
-                                    'class'         => "wallet-balance-update-btn bg--danger one",
-                                    'text'          => "Add/Subtract Balance",
-                                    'icon'          => "las la-wallet me-1",
-                                    'permission'    => "admin.users.wallet.balance.update",
-                                ])
-                            </div>
-                            <div class="user-action-btn">
                                 @include('admin.components.link.custom',[
                                     'href'          => setRoute('admin.users.login.logs',$user->username),
                                     'class'         => "bg--base two",

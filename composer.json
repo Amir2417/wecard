@@ -48,6 +48,7 @@
             "app/Http/Helpers/helpers.php",
             "app/Http/Helpers/stripeCard.php",
             "app/Http/Helpers/sudo-card.php",
+            "app/Http/Helpers/strowallet-card.php",
             "app/Http/Helpers/Api/helpers.php"
         ]
     },

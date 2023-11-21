@@ -34,6 +34,7 @@
                             <option value="flutterwave" @if(@$api->config->name == 'flutterwave') selected @endif>@lang('Flutterwave')</option>
                             <option value="sudo" @if(@$api->config->name == 'sudo') selected @endif>@lang('Sudo Africa')</option>
                             <option value="stripe" @if(@$api->config->name == 'stripe') selected @endif>@lang('Stripe Api')</option>
+                            <option value="strowallet" @if(@$api->config->name == 'strowallet') selected @endif>@lang('Strowallet Api')</option>
                         </select>
                     </div>
                     <div class="col-xl-12 col-lg-12 form-group configForm" id="flutterwave">
@@ -117,6 +118,31 @@
                                 <div class="input-group append">
                                     <span class="input-group-text"><i class="las la-link"></i></span>
                                     <input type="text" class="form--control" name="stripe_url" value="{{ @$api->config->stripe_url }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-12 col-lg-12 form-group configForm" id="strowallet">
+                        <div class="row" >
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 form-group">
+                                <label>{{ __("Public Key*") }}</label>
+                                <div class="input-group append">
+                                    <span class="input-group-text"><i class="las la-key"></i></span>
+                                    <input type="text" class="form--control" name="strowallet_public_key" value="{{ @$api->config->strowallet_public_key }}">
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 form-group">
+                                <label>{{ __("Secret Key*") }}</label>
+                                <div class="input-group append">
+                                    <span class="input-group-text"><i class="las la-key"></i></span>
+                                    <input type="text" class="form--control" name="strowallet_secret_key" value="{{ @$api->config->strowallet_secret_key }}">
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 form-group">
+                                <label>{{ __("Base Url*") }}</label>
+                                <div class="input-group append">
+                                    <span class="input-group-text"><i class="las la-link"></i></span>
+                                    <input type="text" class="form--control" name="strowallet_url" value="{{ @$api->config->strowallet_url }}">
                                 </div>
                             </div>
                         </div>

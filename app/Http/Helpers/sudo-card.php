@@ -6,6 +6,7 @@ use App\Models\VirtualCardApi;
 
 
 function get_funding_source($api_key,$base_url){
+    
     $curl = curl_init();
     curl_setopt_array($curl, [
     CURLOPT_URL => $base_url."/fundingsources",
@@ -21,6 +22,7 @@ function get_funding_source($api_key,$base_url){
     ],
     ]);
     $response = curl_exec($curl);
+    
     $err = curl_error($curl);
     curl_close($curl);
     if ($err) {
@@ -32,7 +34,7 @@ function get_funding_source($api_key,$base_url){
     }
 }
 function create_sudo_account($api_key,$base_url, $currency){
-
+    
     $curl = curl_init();
     curl_setopt_array($curl, [
     CURLOPT_URL => $base_url."/accounts",
@@ -53,7 +55,7 @@ function create_sudo_account($api_key,$base_url, $currency){
         "content-type: application/json"
     ],
     ]);
-
+    
     $response = curl_exec($curl);
 
     $err = curl_error($curl);
@@ -84,15 +86,21 @@ function get_sudo_accounts($api_key,$base_url){
     ],
     ]);
     $response = curl_exec($curl);
+    
     $err = curl_error($curl);
     curl_close($curl);
     $result = json_decode($response, true);
+    
     if ($result['statusCode'] != 200) {
         $result = json_decode( $response,true);
         return  $result;
     } else {
         $result = json_decode( $response,true);
-        return  $result['data'];
+        $account_type = 'account';
+        $filteredArray = array_filter($result['data'], function($item) use ($account_type) {
+            return $item['type'] === $account_type;
+        });
+        return  $filteredArray??[];
     }
 }
 function create_sudo_customer($api_key,$base_url,$user){
@@ -141,7 +149,6 @@ function create_sudo_customer($api_key,$base_url,$user){
     curl_close($curl);
 
     if ($err) {
-
         $result = json_decode( $response,true);
         return  $result;
     } else {

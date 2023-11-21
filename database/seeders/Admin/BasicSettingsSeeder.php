@@ -15,7 +15,7 @@ class BasicSettingsSeeder extends Seeder
     public function run()
     {
         $data = [
-            'site_name'         => "StripCard",
+            'site_name'         => "Wecard",
             'site_title'        => " Virtual Credit Card Solution",
             'base_color'        => "#635BFF",
             'web_version'       => "3.0.0",

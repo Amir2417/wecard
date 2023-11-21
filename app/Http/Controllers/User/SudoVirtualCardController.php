@@ -137,8 +137,7 @@ class SudoVirtualCardController extends Controller
 
         }
     }
-    public function cardBuy(Request $request)
-    {
+    public function cardBuy(Request $request){
         $request->validate([
             'card_amount' => 'required|numeric|gt:0',
         ]);
@@ -178,7 +177,9 @@ class SudoVirtualCardController extends Controller
             return back()->with(['error' => ['Sorry, insufficient balance']]);
         }
         $currency = $baseCurrency->code;
+        
         $funding_sources =  get_funding_source( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
+        
         if(isset( $funding_sources['statusCode'])){
             if($funding_sources['statusCode'] == 403){
                 return back()->with(['error' => [$funding_sources['message']]]);
@@ -192,11 +193,12 @@ class SudoVirtualCardController extends Controller
 
         }
         $bankCode = $funding_sources['data'][0]['_id']??'';
-
         $sudo_accounts =    get_sudo_accounts( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
+        
         $filteredArray = array_filter($sudo_accounts, function($item) use ($currency) {
             return $item['currency'] === $currency;
         });
+        
         $matchingElements = array_values($filteredArray);
         $debitAccountId= $matchingElements[0]['_id']??"";
 

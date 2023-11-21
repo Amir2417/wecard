@@ -22,17 +22,20 @@ class VirtualCardController extends Controller
     }
     public function cardApiUpdate(Request $request){
         $validator = Validator::make($request->all(), [
-            'api_method' => 'required|in:flutterwave,sudo,stripe',
+            'api_method'                => 'required|in:flutterwave,sudo,stripe,strowallet',
             'flutterwave_secret_key'    => 'required_if:api_method,flutterwave',
             'flutterwave_secret_hash'   => 'required_if:api_method,flutterwave',
             'flutterwave_url'           => 'required_if:api_method,flutterwave',
-            'sudo_api_key'               => 'required_if:api_method,sudo',
+            'sudo_api_key'              => 'required_if:api_method,sudo',
             'sudo_vault_id'             => 'required_if:api_method,sudo',
             'sudo_url'                  => 'required_if:api_method,sudo',
             'sudo_mode'                 => 'required_if:api_method,sudo',
             'stripe_public_key'         => 'required_if:api_method,stripe',
-            'stripe_secret_key'             => 'required_if:api_method,stripe',
+            'stripe_secret_key'         => 'required_if:api_method,stripe',
             'stripe_url'                => 'required_if:api_method,stripe',
+            'strowallet_public_key'     => 'required_if:api_method,strowallet',
+            'strowallet_secret_key'     => 'required_if:api_method,strowallet',
+            'strowallet_url'            => 'required_if:api_method,strowallet',
             'card_details'              => 'required|string',
         ]);
         if($validator->fails()) {
@@ -43,7 +46,7 @@ class VirtualCardController extends Controller
         $api = VirtualCardApi::first();
         $api->card_details = $request->card_details;
         $api->config = $data;
-
+       
         if ($request->hasFile("image")) {
             try {
                 $image = get_files_from_fileholder($request, "image");
