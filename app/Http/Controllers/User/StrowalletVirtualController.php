@@ -35,7 +35,7 @@ class StrowalletVirtualController extends Controller
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $transactions = Transaction::auth()->virtualCard()->latest()->take(5)->get();
         $cardApi = $this->api;
-        $user   = auth()->user();
+        
 
         return view('user.sections.virtual-card-strowallet.index',compact(
             'page_title',
@@ -43,7 +43,7 @@ class StrowalletVirtualController extends Controller
             'myCards',
             'transactions',
             'cardCharge',
-            'user'
+            
         ));
     }
     /**
@@ -168,7 +168,7 @@ class StrowalletVirtualController extends Controller
         // dd($card_details['data']['card_detail']);
         $trx_id =  'CB'.getTrxNum();
         try{
-            $sender = $this->insertCadrBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
+            $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
             $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->last4);
             if( $basic_setting->email_notification == true){
             $notifyDataSender = [
@@ -187,7 +187,7 @@ class StrowalletVirtualController extends Controller
             return back()->with(['error' => [$e->getMessage()]]);
         }
     }
-    public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable) {
+    public function insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable) {
         $trx_id = $trx_id;
         $authWallet = $wallet;
         $afterCharge = ($authWallet->balance - $payable);
@@ -271,36 +271,34 @@ class StrowalletVirtualController extends Controller
         }
         $validated = $validator->safe()->all();
         if($request->status == 1){
-            require_once('vendor/autoload.php');
+           
             $card   = StrowalletVirtualCard::where('id',$request->data_target)->where('is_active',1)->first();
             $client = new \GuzzleHttp\Client();
             $public_key     = $this->api->config->strowallet_public_key;
             $base_url       = $this->api->config->strowallet_url;
-
-
 
             $response = $client->request('POST', $base_url.'action/status/?action=freeze&card_id='.$card->card_id.'&public_key='.$public_key, [
             'headers' => [
                 'accept' => 'application/json',
             ],
             ]);
-
-            
-
            
             $result = $response->getBody();
             $data  = json_decode($result, true);
             
-            if( $data['status'] == true ){
+            if( isset($data['status']) ){
                 $card->is_active = 0;
                 $card->save();
                 $success = ['success' => [' Card Freeze successfully']];
                 return Response::success($success,null,200);
+            }else{
+                $error = ['error' => $data['message']];
+                return Response::error($error,null,200);
             }
             
 
         }else{
-            require_once('vendor/autoload.php');
+           
             $card   = StrowalletVirtualCard::where('id',$request->data_target)->where('is_active',0)->first();
             $client = new \GuzzleHttp\Client();
             $public_key     = $this->api->config->strowallet_public_key;
@@ -316,22 +314,15 @@ class StrowalletVirtualController extends Controller
 
             $result = $response->getBody();
             $data  = json_decode($result, true);
-            if(isset($data)){
-            
-                if($data['statusCode'] == 400){
-                    $success = ['error' => $data['message']];
-                    return Response::success($success,null,200);
-                }
-                if($data['status'] == true ){
-                    $card->is_active = 1;
-                    $card->save();
-                    $success = ['success' => [' Card UnFreeze successfully']];
-                    return Response::success($success,null,200);
-                }
-                
+            if(isset($data['status'])){
+                $card->is_active = 1;
+                $card->save();
+                $success = ['success' => [' Card UnFreeze successfully']];
+                return Response::success($success,null,200);
+            }else{
+                $error = ['error' => $data['message']];
+                return Response::error($error,null,200);
             }
-            
-            
         }
         
     }
