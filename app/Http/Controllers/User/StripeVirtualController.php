@@ -6,7 +6,6 @@ use App\Constants\NotificationConst;
 use App\Constants\PaymentGatewayConst;
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\Response;
-use App\Models\Admin\BasicSettings;
 use App\Models\Admin\Currency;
 use App\Models\Admin\TransactionSetting;
 use App\Models\StripeVirtualCard;

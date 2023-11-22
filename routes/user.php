@@ -11,6 +11,7 @@ use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\TransactionController;
 use App\Http\Controllers\User\AuthorizationController;
 use App\Http\Controllers\User\StripeVirtualController;
+use App\Http\Controllers\User\StrowalletVirtualController;
 use App\Http\Controllers\User\SudoVirtualCardController;
 use App\Http\Controllers\User\SupportTicketController;
 use App\Http\Controllers\User\TransferMoneyController;
@@ -63,6 +64,17 @@ Route::prefix("user")->name("user.")->group(function(){
         Route::get('preview','preview')->name('preview');
         Route::post('confirm','confirmMoneyOut')->name('confirm');
 
+    });
+    //virtual card strowallet
+    Route::middleware('virtual_card_method:strowallet')->group(function(){
+        Route::controller(StrowalletVirtualController::class)->prefix('strowallet-virtual-card')->name('strowallet.virtual.card.')->group(function(){
+            Route::get('/','index')->name('index');
+            Route::post('create','cardBuy')->name('create')->middleware('kyc.verification.guard');
+            Route::get('details/{card_id}','cardDetails')->name('details');
+            Route::get('transaction/{card_id}','cardTransaction')->name('transaction');
+            Route::put('change/status','cardBlockUnBlock')->name('change.status');
+            Route::post('get/sensitive/data','getSensitiveData')->name('sensitive.data');
+        });
     });
     //virtual card stripe
      Route::middleware('virtual_card_method:stripe')->group(function(){

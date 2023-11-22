@@ -11,6 +11,7 @@ class AddUserTableUpdateColumn extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->text('sudo_customer')->nullable();
             $table->text('sudo_account')->nullable();
+            $table->text('strowallet_customer')->nullable();
         });
     }
 
@@ -19,6 +20,7 @@ class AddUserTableUpdateColumn extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('sudo_customer');
             $table->dropColumn('sudo_account');
+            $table->dropColumn('strowallet_customer');
         });
     }
 }

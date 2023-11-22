@@ -60,6 +60,7 @@
 @include('partials.stripe-card-modals')
 {{-- @include('partials.card-modals') --}}
 @include('partials.sudo-card-modals')
+@include('partials.strowallet-card-modals')
 @include('partials.footer-asset')
 
 @stack("script")
