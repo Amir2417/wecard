@@ -690,7 +690,7 @@ $(document).ready(function(){
       };
 
       $.post(hitUrl,data,function(response) {
-        console.log(response);
+        
         throwMessage('success',response.message.success);
         // Remove Loading animation
         $(event.target).find(".btn-ring").hide();

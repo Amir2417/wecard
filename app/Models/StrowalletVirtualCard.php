@@ -31,7 +31,7 @@ class StrowalletVirtualCard extends Model
         'customer_email'        => 'string',
         'balance'               => 'string',
         'status'                => 'boolean',
-        'isDeleted'             => 'boolean',
+        'is_active'             => 'boolean',
     ];
     public function user() {
         return $this->belongsTo(User::class);

@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('customer_email');
             $table->string('balance');
             $table->boolean('status')->default(true);
-            $table->boolean('isDeleted')->default(true);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');

@@ -302,7 +302,7 @@ class SudoVirtualCardController extends Controller
 
     }
     //card buy helper
-     public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable) {
+    public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable) {
         $trx_id = $trx_id;
         $authWallet = $wallet;
         $afterCharge = ($authWallet->balance - $payable);

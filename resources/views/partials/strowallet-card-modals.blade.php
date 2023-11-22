@@ -71,6 +71,9 @@
                                         <code class="d-block mt-3  text--base fw-bold balance-show">{{ __(" Balance: ") }} {{ authWalletBalance() }} {{ get_default_currency_code() }}</code>
                                     </div>
                                 </div>
+                                @php
+                                    $user   = auth()->user();
+                                @endphp
                                 @if ($user->strowallet_customer == null)
                                     <div class="col-md-6 col-lg-6 d-flex">
                                         <div class="form-group">

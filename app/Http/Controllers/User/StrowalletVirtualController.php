@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers\User;
 
+use Exception;
 use App\Models\UserWallet;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Http\Helpers\Response;
 use App\Models\Admin\Currency;
 use App\Models\VirtualCardApi;
+use App\Models\UserNotification;
+use Illuminate\Support\Facades\DB;
+use App\Models\Admin\BasicSettings;
+use App\Constants\NotificationConst;
 use App\Http\Controllers\Controller;
 use App\Models\StrowalletVirtualCard;
+use App\Constants\PaymentGatewayConst;
 use App\Models\Admin\TransactionSetting;
+use Illuminate\Support\Facades\Validator;
 
 class StrowalletVirtualController extends Controller
 {
@@ -36,6 +44,22 @@ class StrowalletVirtualController extends Controller
             'transactions',
             'cardCharge',
             'user'
+        ));
+    }
+    /**
+     * Method for card details
+     * @param $card_id
+     * @param \Illuminate\Http\Request $request
+     */
+    public function cardDetails($card_id){
+        $page_title = "Card Details";
+        $myCard = StrowalletVirtualCard::where('card_id',$card_id)->first();
+        if(!$myCard) return back()->with(['error' => ['Card Not Found!']]);
+        $cardApi = $this->api;
+        return view('user.sections.virtual-card-strowallet.details',compact(
+            'page_title',
+            'myCard',
+            'cardApi'
         ));
     }
     /**
@@ -70,6 +94,7 @@ class StrowalletVirtualController extends Controller
         
         
         $amount = $request->card_amount;
+        $basic_setting = BasicSettings::first();
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
             return back()->with(['error' => ['Wallet not found']]);
@@ -140,6 +165,174 @@ class StrowalletVirtualController extends Controller
         $strowallet_card->balance                   = $card_details['data']['card_detail']['balance'];
         $strowallet_card->save();
 
-        dd($card_details['data']['card_detail']);
+        // dd($card_details['data']['card_detail']);
+        $trx_id =  'CB'.getTrxNum();
+        try{
+            $sender = $this->insertCadrBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
+            $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->last4);
+            if( $basic_setting->email_notification == true){
+            $notifyDataSender = [
+                'trx_id'  => $trx_id,
+                'title'  => "Virtual Card (Buy Card)",
+                'request_amount'  => getAmount($amount,4).' '.get_default_currency_code(),
+                'payable'   =>  getAmount($payable,4).' ' .get_default_currency_code(),
+                'charges'   => getAmount( $total_charge, 2).' ' .get_default_currency_code(),
+                'card_amount'  => getAmount( $strowallet_card->amount, 2).' ' .get_default_currency_code(),
+                'card_pan'  => $strowallet_card->last4,
+                'status'  => "Success",
+                ];
+            }
+            return redirect()->route("user.strowallet.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
+        }catch(Exception $e){
+            return back()->with(['error' => [$e->getMessage()]]);
+        }
+    }
+    public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable) {
+        $trx_id = $trx_id;
+        $authWallet = $wallet;
+        $afterCharge = ($authWallet->balance - $payable);
+        $details =[
+            'card_info' =>   $strowallet_card??''
+        ];
+        DB::beginTransaction();
+        try{
+            $id = DB::table("transactions")->insertGetId([
+                'user_id'                       => $user->id,
+                'user_wallet_id'                => $authWallet->id,
+                'payment_gateway_currency_id'   => null,
+                'type'                          => PaymentGatewayConst::VIRTUALCARD,
+                'trx_id'                        => $trx_id,
+                'request_amount'                => $amount,
+                'payable'                       => $payable,
+                'available_balance'             => $afterCharge,
+                'remark'                        => ucwords(remove_speacial_char(PaymentGatewayConst::CARDBUY," ")),
+                'details'                       => json_encode($details),
+                'attribute'                      =>PaymentGatewayConst::RECEIVED,
+                'status'                        => true,
+                'created_at'                    => now(),
+            ]);
+            $this->updateSenderWalletBalance($authWallet,$afterCharge);
+
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+        return $id;
+    }
+    public function insertBuyCardCharge($fixedCharge,$percent_charge, $total_charge,$user,$id,$masked_card) {
+        DB::beginTransaction();
+        try{
+            DB::table('transaction_charges')->insert([
+                'transaction_id'    => $id,
+                'percent_charge'    => $percent_charge,
+                'fixed_charge'      =>$fixedCharge,
+                'total_charge'      =>$total_charge,
+                'created_at'        => now(),
+            ]);
+            DB::commit();
+
+            //notification
+            $notification_content = [
+                'title'         =>"Buy Card ",
+                'message'       => "Buy card successful ".$masked_card,
+                'image'         => files_asset_path('profile-default'),
+            ];
+
+            UserNotification::create([
+                'type'      => NotificationConst::CARD_BUY,
+                'user_id'  => $user->id,
+                'message'   => $notification_content,
+            ]);
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+    }
+    //update user balance
+    public function updateSenderWalletBalance($authWallet,$afterCharge) {
+        $authWallet->update([
+            'balance'   => $afterCharge,
+        ]);
+    }
+    /**
+     * card freeze unfreeze
+     */
+    public function cardBlockUnBlock(Request $request) {
+        
+        $validator = Validator::make($request->all(),[
+            'status'                    => 'required|boolean',
+            'data_target'               => 'required|string',
+        ]);
+        if ($validator->stopOnFirstFailure()->fails()) {
+            $error = ['error' => $validator->errors()];
+            return Response::error($error,null,400);
+        }
+        $validated = $validator->safe()->all();
+        if($request->status == 1){
+            require_once('vendor/autoload.php');
+            $card   = StrowalletVirtualCard::where('id',$request->data_target)->where('is_active',1)->first();
+            $client = new \GuzzleHttp\Client();
+            $public_key     = $this->api->config->strowallet_public_key;
+            $base_url       = $this->api->config->strowallet_url;
+
+
+
+            $response = $client->request('POST', $base_url.'action/status/?action=freeze&card_id='.$card->card_id.'&public_key='.$public_key, [
+            'headers' => [
+                'accept' => 'application/json',
+            ],
+            ]);
+
+            
+
+           
+            $result = $response->getBody();
+            $data  = json_decode($result, true);
+            
+            if( $data['status'] == true ){
+                $card->is_active = 0;
+                $card->save();
+                $success = ['success' => [' Card Freeze successfully']];
+                return Response::success($success,null,200);
+            }
+            
+
+        }else{
+            require_once('vendor/autoload.php');
+            $card   = StrowalletVirtualCard::where('id',$request->data_target)->where('is_active',0)->first();
+            $client = new \GuzzleHttp\Client();
+            $public_key     = $this->api->config->strowallet_public_key;
+            $base_url       = $this->api->config->strowallet_url;
+
+
+
+            $response = $client->request('POST', $base_url.'action/status/?action=unfreeze&card_id='.$card->card_id.'&public_key='.$public_key, [
+            'headers' => [
+                'accept' => 'application/json',
+            ],
+            ]);
+
+            $result = $response->getBody();
+            $data  = json_decode($result, true);
+            if(isset($data)){
+            
+                if($data['statusCode'] == 400){
+                    $success = ['error' => $data['message']];
+                    return Response::success($success,null,200);
+                }
+                if($data['status'] == true ){
+                    $card->is_active = 1;
+                    $card->save();
+                    $success = ['success' => [' Card UnFreeze successfully']];
+                    return Response::success($success,null,200);
+                }
+                
+            }
+            
+            
+        }
+        
     }
 }
