@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\User\Auth\LoginController;
 use App\Http\Controllers\Api\User\AuthorizationController;
 use App\Http\Controllers\Api\User\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\User\StripeVirtualController;
+use App\Http\Controllers\Api\User\StrowalletVirtualCardController;
 use App\Http\Controllers\Api\User\SudoVirtualCardController;
 use App\Http\Controllers\Api\User\TransferMoneyController;
 use App\Http\Controllers\Api\User\VirtualCardController;
@@ -119,6 +120,20 @@ Route::prefix('user')->group(function(){
             //virtual card flutterwave
             Route::middleware('virtual_card_method:flutterwave')->group(function(){
                 Route::controller(VirtualCardController::class)->prefix('my-card')->group(function(){
+                    Route::get('/','index');
+                    Route::get('charges','charges');
+                    Route::post('create','cardBuy')->middleware('api.kyc.verification.guard');
+                    Route::post('fund','cardFundConfirm');
+                    Route::post('withdraw','cardWithdraw');
+                    Route::get('details','cardDetails');
+                    Route::get('transaction','cardTransaction');
+                    Route::post('block','cardBlock');
+                    Route::post('unblock','cardUnBlock');
+                });
+            });
+            //strowallet virtual card
+            Route::middleware('virtual_card_method:strowallet')->group(function(){
+                Route::controller(StrowalletVirtualCardController::class)->prefix('strowallet-card')->group(function(){
                     Route::get('/','index');
                     Route::get('charges','charges');
                     Route::post('create','cardBuy')->middleware('api.kyc.verification.guard');

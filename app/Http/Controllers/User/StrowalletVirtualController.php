@@ -285,8 +285,6 @@ class StrowalletVirtualController extends Controller
                 $error = ['error' => $data['message']];
                 return Response::error($error,null,200);
             }
-            
-
         }else{
            
             $card   = StrowalletVirtualCard::where('id',$request->data_target)->where('is_active',0)->first();
@@ -294,12 +292,10 @@ class StrowalletVirtualController extends Controller
             $public_key     = $this->api->config->strowallet_public_key;
             $base_url       = $this->api->config->strowallet_url;
 
-
-
             $response = $client->request('POST', $base_url.'action/status/?action=unfreeze&card_id='.$card->card_id.'&public_key='.$public_key, [
-            'headers' => [
-                'accept' => 'application/json',
-            ],
+                'headers' => [
+                    'accept' => 'application/json',
+                ],
             ]);
 
             $result = $response->getBody();

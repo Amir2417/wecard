@@ -91,7 +91,7 @@ class SudoVirtualCardController extends Controller
                 'payable' => getAmount($item->payable,2).' '.get_default_currency_code(),
                 'total_charge' => getAmount($item->charge->total_charge,2).' '.get_default_currency_code(),
                 'card_amount' => getAmount(@$item->details->card_info->amount,2).' '.get_default_currency_code(),
-                'card_number' => $item->details->card_info->card_pan??$item->details->card_info->maskedPan,
+                'card_number' => $item->details->card_info->card_pan??$item->details->card_info->maskedPan ?? $item->details->card_info->card_number,
                 'current_balance' => getAmount($item->available_balance,2).' '.get_default_currency_code(),
                 'status' => $item->stringStatus->value ,
                 'date_time' => $item->created_at ,
