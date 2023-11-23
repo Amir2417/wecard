@@ -138,7 +138,6 @@ Route::prefix('user')->group(function(){
                     Route::get('charges','charges');
                     Route::post('create','cardBuy')->middleware('api.kyc.verification.guard');
                     Route::post('fund','cardFundConfirm');
-                    Route::post('withdraw','cardWithdraw');
                     Route::get('details','cardDetails');
                     Route::get('transaction','cardTransaction');
                     Route::post('block','cardBlock');
