@@ -132,13 +132,23 @@
                                         </div>
                                         <div class="form-group ms-2">
                                             <label>{{__("Country")}}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter Country") }}" name="country" value="{{ $user->address->country }}" >
+                                            <select name="country" class="form--control nice-select">
+                                                <option selected disabled>{{ __("Select Country") }}</option>
+                                                <option value="NIGERIA">{{ __("NIGERIA") }}</option>
+                                                <option value="UNITED STATES">{{ __("UNITED STATES") }}</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-lg-6 d-flex">
                                         <div class="form-group ms-2">
                                             <label>{{__("ID TYPE") }} {{ __("(BVN, NIN, PASSPORT)") }}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter ID TYPE") }}" name="id_type">
+                                            <select name="id_type" class="form--control nice-select">
+                                                <option selected disabled>{{ __("Select ID Type") }}</option>
+                                                <option value="BVN">{{ __("BVN") }}</option>
+                                                <option value="NIN">{{ __("NIN") }}</option>
+                                                <option value="PASSPORT">{{ __("PASSPORT") }}</option>
+                                            </select>
+                                            
                                         </div>
                                     </div>
                                 @endif
