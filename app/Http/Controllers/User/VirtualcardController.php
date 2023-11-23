@@ -30,12 +30,19 @@ class VirtualcardController extends Controller
     }
     public function index()
     {
-        $page_title = "Virtual Card";
-        $myCards = VirtualCard::where('user_id',auth()->user()->id)->get();
-        $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
-        $transactions = Transaction::auth()->virtualCard()->latest()->take(10)->get();
-        $cardApi = $this->api;
-        return view('user.sections.virtual-card.index',compact('page_title','myCards','transactions','cardCharge','cardApi'));
+        $page_title     = "Virtual Card";
+        $myCards        = VirtualCard::where('user_id',auth()->user()->id)->get();
+        $cardCharge     = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
+        $transactions   = Transaction::auth()->virtualCard()->latest()->take(10)->get();
+        $cardApi        = $this->api;
+
+        return view('user.sections.virtual-card.index',compact(
+            'page_title',
+            'myCards',
+            'transactions',
+            'cardCharge',
+            'cardApi'
+        ));
     }
     public function cardDetails($card_id)
     {

@@ -70,6 +70,7 @@ Route::prefix("user")->name("user.")->group(function(){
         Route::controller(StrowalletVirtualController::class)->prefix('strowallet-virtual-card')->name('strowallet.virtual.card.')->group(function(){
             Route::get('/','index')->name('index');
             Route::post('create','cardBuy')->name('create')->middleware('kyc.verification.guard');
+            Route::post('fund','cardFundConfirm')->name('fund');
             Route::get('details/{card_id}','cardDetails')->name('details');
             Route::get('transaction/{card_id}','cardTransaction')->name('transaction');
             Route::put('change/status','cardBlockUnBlock')->name('change.status');

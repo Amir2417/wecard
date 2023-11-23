@@ -323,7 +323,7 @@
                             @elseif (@$item->type == payment_gateway_const()::MOBILETOPUP)
                                 <span class="fw-bold">{{ get_amount(@$item->payable,get_default_currency_code()) }}</span>
                             @elseif (@$item->type == payment_gateway_const()::VIRTUALCARD)
-                                <span class="fw-bold"> {{ get_amount(@$item->details->card_info->amount,get_default_currency_code()) }}</span>
+                                <span class="fw-bold"> {{ get_amount(@$item->details->card_info->amount,get_default_currency_code())  }}</span>
 
                             @elseif (@$item->type == payment_gateway_const()::TYPEMONEYEXCHANGE)
                                 <span>{{ get_amount(@$item->payable,@$item->user_wallet->currency->code) }}</span>

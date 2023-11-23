@@ -34,6 +34,7 @@ class StrowalletVirtualController extends Controller
         $myCards = StrowalletVirtualCard::where('user_id',auth()->user()->id)->get();
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $transactions = Transaction::auth()->virtualCard()->latest()->take(5)->get();
+        
         $cardApi = $this->api;
         
 
@@ -326,4 +327,136 @@ class StrowalletVirtualController extends Controller
         }
         
     }
+    /**
+     * Card Fund
+     */
+    public function cardFundConfirm(Request $request){
+        $request->validate([
+            'id' => 'required|integer',
+            'fund_amount' => 'required|numeric|gt:0',
+        ]);
+        $user = auth()->user();
+        $myCard =  StrowalletVirtualCard::where('user_id',$user->id)->where('id',$request->id)->first();
+        
+        if(!$myCard){
+            return back()->with(['error' => ['Your Card not found']]);
+        }
+
+        $amount = $request->fund_amount;
+        $wallet = UserWallet::where('user_id',$user->id)->first();
+        if(!$wallet){
+            return back()->with(['error' => ['Wallet not found']]);
+        }
+        $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
+        $baseCurrency = Currency::default();
+        $rate = $baseCurrency->rate;
+        if(!$baseCurrency){
+            return back()->with(['error' => ['Default currency not setup yet']]);
+        }
+        $fixedCharge = $cardCharge->fixed_charge *  $rate;
+        $percent_charge = ($amount / 100) * $cardCharge->percent_charge;
+        $total_charge = $fixedCharge + $percent_charge;
+        $payable = $total_charge + $amount;
+        if($payable > $wallet->balance ){
+            return back()->with(['error' => ['Sorry, insufficient balance']]);
+        }
+        $currency =$baseCurrency->code;
+        $public_key     = $this->api->config->strowallet_public_key;
+        $base_url       = $this->api->config->strowallet_url;
+
+        $client = new \GuzzleHttp\Client();
+
+        $response               = $client->request('POST', $base_url.'fund-card/', [
+            'headers'           => [
+                'accept'        => 'application/json',
+            ],
+            'form_params'       => [
+                'card_id'       => $myCard->card_id,
+                'amount'        => $amount,
+                'public_key'     => $public_key,
+            ],
+        ]);
+
+        $result         = $response->getBody();
+        $decodedResult  = json_decode($result, true);
+       
+        if(!empty($result->status)  && $result->status == "success"){
+            //added fund amount to card
+            $myCard->balance += $amount;
+            $myCard->save();
+            $trx_id = 'CF'.getTrxNum();
+            $sender = $this->insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable);
+            $this->insertFundCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$myCard->card_number,$amount);
+            return redirect()->back()->with(['success' => ['Card Funded Successfully']]);
+
+        }else{
+            return redirect()->back()->with(['error' => [@$result->message??'Please wait a moment & try again later.']]);
+        }
+
+    }
+    //card fund helper
+    public function insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable) {
+        $trx_id = $trx_id;
+        $authWallet = $wallet;
+        $afterCharge = ($authWallet->balance - $payable);
+        $details =[
+            'card_info' =>   $myCard??''
+        ];
+        DB::beginTransaction();
+        try{
+            $id = DB::table("transactions")->insertGetId([
+                'user_id'                       => $user->id,
+                'user_wallet_id'                => $authWallet->id,
+                'payment_gateway_currency_id'   => null,
+                'type'                          => PaymentGatewayConst::VIRTUALCARD,
+                'trx_id'                        => $trx_id,
+                'request_amount'                => $amount,
+                'payable'                       => $payable,
+                'available_balance'             => $afterCharge,
+                'remark'                        => ucwords(remove_speacial_char(PaymentGatewayConst::CARDFUND," ")),
+                'details'                       => json_encode($details),
+                'attribute'                      =>PaymentGatewayConst::RECEIVED,
+                'status'                        => true,
+                'created_at'                    => now(),
+            ]);
+            $this->updateSenderWalletBalance($authWallet,$afterCharge);
+
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+        return $id;
+    }
+    public function insertFundCardCharge($fixedCharge,$percent_charge, $total_charge,$user,$id,$card_number,$amount) {
+        DB::beginTransaction();
+        try{
+            DB::table('transaction_charges')->insert([
+                'transaction_id'    => $id,
+                'percent_charge'    => $percent_charge,
+                'fixed_charge'      =>$fixedCharge,
+                'total_charge'      =>$total_charge,
+                'created_at'        => now(),
+            ]);
+            DB::commit();
+
+            //notification
+            $notification_content = [
+                'title'         =>"Card Fund ",
+                'message'       => "Card fund successful card: ".$card_number.' '.getAmount($amount,2).' '.get_default_currency_code(),
+                'image'         => files_asset_path('profile-default'),
+            ];
+
+            UserNotification::create([
+                'type'      => NotificationConst::CARD_FUND,
+                'user_id'  => $user->id,
+                'message'   => $notification_content,
+            ]);
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+    }
+    
 }
