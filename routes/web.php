@@ -51,7 +51,5 @@ Route::controller(UserAddMoneyController::class)->prefix("api-add-money")->name(
     Route::post('sslcommerz/cancel','sllCommerzCancel')->name('ssl.cancel');
 });
 
-Route::get('create-customer',function(){
-    dd(stro_wallet_create_user());
-});
+
 

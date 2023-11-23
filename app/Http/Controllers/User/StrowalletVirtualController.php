@@ -119,7 +119,7 @@ class StrowalletVirtualController extends Controller
         if($payable > $wallet->balance ){
             return back()->with(['error' => ['Sorry, insufficient balance']]);
         }
-        $currency = $baseCurrency->code;
+        
 
         if($user->strowallet_customer == null){
             $createCustomer     = stro_wallet_create_user($user,$formData,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
@@ -170,19 +170,8 @@ class StrowalletVirtualController extends Controller
         $trx_id =  'CB'.getTrxNum();
         try{
             $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
-            $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->last4);
-            if( $basic_setting->email_notification == true){
-            $notifyDataSender = [
-                'trx_id'  => $trx_id,
-                'title'  => "Virtual Card (Buy Card)",
-                'request_amount'  => getAmount($amount,4).' '.get_default_currency_code(),
-                'payable'   =>  getAmount($payable,4).' ' .get_default_currency_code(),
-                'charges'   => getAmount( $total_charge, 2).' ' .get_default_currency_code(),
-                'card_amount'  => getAmount( $strowallet_card->amount, 2).' ' .get_default_currency_code(),
-                'card_pan'  => $strowallet_card->last4,
-                'status'  => "Success",
-                ];
-            }
+            $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
+            
             return redirect()->route("user.strowallet.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
         }catch(Exception $e){
             return back()->with(['error' => [$e->getMessage()]]);
@@ -221,14 +210,14 @@ class StrowalletVirtualController extends Controller
         }
         return $id;
     }
-    public function insertBuyCardCharge($fixedCharge,$percent_charge, $total_charge,$user,$id,$masked_card) {
+    public function insertBuyCardCharge($fixedCharge,$percent_charge, $total_charge,$user,$id,$card_number) {
         DB::beginTransaction();
         try{
             DB::table('transaction_charges')->insert([
                 'transaction_id'    => $id,
                 'percent_charge'    => $percent_charge,
-                'fixed_charge'      =>$fixedCharge,
-                'total_charge'      =>$total_charge,
+                'fixed_charge'      => $fixedCharge,
+                'total_charge'      => $total_charge,
                 'created_at'        => now(),
             ]);
             DB::commit();
@@ -236,13 +225,13 @@ class StrowalletVirtualController extends Controller
             //notification
             $notification_content = [
                 'title'         =>"Buy Card ",
-                'message'       => "Buy card successful ".$masked_card,
+                'message'       => "Buy card successful ".$card_number,
                 'image'         => files_asset_path('profile-default'),
             ];
 
             UserNotification::create([
                 'type'      => NotificationConst::CARD_BUY,
-                'user_id'  => $user->id,
+                'user_id'   => $user->id,
                 'message'   => $notification_content,
             ]);
             DB::commit();
@@ -360,7 +349,7 @@ class StrowalletVirtualController extends Controller
         if($payable > $wallet->balance ){
             return back()->with(['error' => ['Sorry, insufficient balance']]);
         }
-        $currency =$baseCurrency->code;
+        
         $public_key     = $this->api->config->strowallet_public_key;
         $base_url       = $this->api->config->strowallet_url;
 
@@ -373,14 +362,14 @@ class StrowalletVirtualController extends Controller
             'form_params'       => [
                 'card_id'       => $myCard->card_id,
                 'amount'        => $amount,
-                'public_key'     => $public_key,
+                'public_key'    => $public_key,
             ],
         ]);
 
         $result         = $response->getBody();
         $decodedResult  = json_decode($result, true);
        
-        if(!empty($result->status)  && $result->status == "success"){
+        if(!empty($decodedResult['success'])  && $decodedResult['success'] == "success"){
             //added fund amount to card
             $myCard->balance += $amount;
             $myCard->save();
@@ -390,7 +379,7 @@ class StrowalletVirtualController extends Controller
             return redirect()->back()->with(['success' => ['Card Funded Successfully']]);
 
         }else{
-            return redirect()->back()->with(['error' => [@$result->message??'Please wait a moment & try again later.']]);
+            return redirect()->back()->with(['error' => [@$decodedResult['message']??'Please wait a moment & try again later.']]);
         }
 
     }
@@ -457,6 +446,62 @@ class StrowalletVirtualController extends Controller
             DB::rollBack();
             throw new Exception($e->getMessage());
         }
+    }
+    /**
+     * Transactions
+     */
+    public function cardTransaction($card_id) {
+        $user = auth()->user();
+        $card = StrowalletVirtualCard::where('user_id',$user->id)->where('card_id', $card_id)->first();
+        $page_title = "Virtual Card Transaction";
+        $id = $card->card_id;
+        $emptyMessage  = 'No Transaction Found!';
+        $start_date = date("Y-m-d", strtotime( date( "Y-m-d", strtotime( date("Y-m-d") ) ) . "-12 month" ) );
+        $end_date = date('Y-m-d');
+        $curl = curl_init();
+        $public_key     = $this->api->config->strowallet_public_key;
+        $base_url       = $this->api->config->strowallet_url;
+
+        curl_setopt_array($curl, [
+        CURLOPT_URL => $base_url . "card-transactions/",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_POSTFIELDS => json_encode([
+            'public_key' => $public_key,
+            'card_id' => $card->card_id,
+        ]),
+        CURLOPT_HTTPHEADER => [
+            "accept: application/json",
+            "content-type: application/json"
+        ],
+        ]);
+
+        $response = curl_exec($curl);
+        curl_close($curl);
+        $result  = json_decode($response, true);
+        
+        if( $result['success'] == true ){
+            $data =[
+                'status'        => true,
+                'message'       => "Card Details Retrieved Successfully.",
+                'data'          => $result['response'],
+            ];
+        }else{
+            $data =[
+                'status'        => false,
+                'message'       => $result['message'] ?? 'Something is wrong! Contact With Admin',
+                'data'          => null,
+            ];
+        }
+        
+        
+        return view('user.sections.virtual-card-strowallet.trx',compact('page_title','card','data'));
+
+
     }
     
 }

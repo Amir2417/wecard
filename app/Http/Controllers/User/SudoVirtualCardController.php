@@ -281,18 +281,7 @@ class SudoVirtualCardController extends Controller
             try{
                 $sender = $this->insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable);
                 $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$v_card->maskedPan);
-                if( $basic_setting->email_notification == true){
-                $notifyDataSender = [
-                    'trx_id'  => $trx_id,
-                    'title'  => "Virtual Card (Buy Card)",
-                    'request_amount'  => getAmount($amount,4).' '.get_default_currency_code(),
-                    'payable'   =>  getAmount($payable,4).' ' .get_default_currency_code(),
-                    'charges'   => getAmount( $total_charge, 2).' ' .get_default_currency_code(),
-                    'card_amount'  => getAmount( $v_card->amount, 2).' ' .get_default_currency_code(),
-                    'card_pan'  => $v_card->maskedPan,
-                    'status'  => "Success",
-                  ];
-                }
+                
                 return redirect()->route("user.sudo.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
             }catch(Exception $e){
                 return back()->with(['error' => [$e->getMessage()]]);

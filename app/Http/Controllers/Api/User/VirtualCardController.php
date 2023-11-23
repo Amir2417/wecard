@@ -30,6 +30,7 @@ class VirtualCardController extends Controller
     public function index()
     {
         $user = auth()->user();
+        dd("tets");
         $basic_settings = BasicSettings::first();
         $card_basic_info = [
             'card_back_details' => @$this->api->card_details,

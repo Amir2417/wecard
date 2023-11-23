@@ -95,7 +95,7 @@
                             </a>
                         </div> 
                         <div class="card-details">
-                            <a href="{{  setRoute('user.virtual.card.transaction',$myCard->card_id) }}">
+                            <a href="{{  setRoute('user.strowallet.virtual.card.transaction',$myCard->card_id) }}">
                                 <div class="details-icon">
                                     <i class="menu-icon las la-recycle"></i>
                                 </div>
