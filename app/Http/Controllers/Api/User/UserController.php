@@ -134,6 +134,9 @@ class UserController extends Controller
         }elseif(virtual_card_system('stripe') == "stripe"){
             $active_virtual_system = "stripe";
         }
+        elseif(virtual_card_system('strowallet') == "strowallet"){
+            $active_virtual_system = "strowallet";
+        }
         $data =[
         'default_image'    => "public/backend/images/default/profile-default.webp",
         "image_path"  =>  "public/frontend/user",
