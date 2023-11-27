@@ -333,8 +333,6 @@ class StrowalletVirtualCardController extends Controller
                 'state'             => 'required|string',
                 'zip_code'          => 'required|string',
                 'city'              => 'required|string',
-                'country'           => 'required|string',
-                'id_type'           => 'required|string',
             ]);
         }else{
             $validator = Validator::make($request->all(), [

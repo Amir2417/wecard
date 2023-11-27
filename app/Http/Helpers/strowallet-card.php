@@ -25,8 +25,8 @@ function stro_wallet_create_user($user,$formData,$public_key,$base_url){
             'state'         => $formData['state'],
             'zipCode'       => $formData['zip_code'],
             'city'          => $formData['city'],
-            'country'       => $formData['country'],
-            'idType'        => $formData['id_type'],
+            'country'       => 'NIGERIA',
+            'idType'        => 'PASSPORT',
         ],
     ]);
 

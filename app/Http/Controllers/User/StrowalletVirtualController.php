@@ -82,8 +82,6 @@ class StrowalletVirtualController extends Controller
                 'state'             => 'required|string',
                 'zip_code'          => 'required|string',
                 'city'              => 'required|string',
-                'country'           => 'required|string',
-                'id_type'           => 'required|string',
             ]);
         }else{
             $request->validate([
