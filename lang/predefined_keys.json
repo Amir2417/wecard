@@ -372,5 +372,19 @@
     "last Name",
     "make Default",
     "qrpay Payment",
-    "changeLanguage"
+    "changeLanguage",
+    "password",
+    "firstName",
+    "lastName",
+    "enterPhone",
+    "enterState",
+    "houseNumber",
+    "idNumber",
+    "customerEmail",
+    "dateOfBirth",
+    "enterHouseNumber",
+    "enterDateOfBirth",
+    "enterCustomerEmail",
+    "enterLine1",
+    "enterPhoneNumber"
 ]
