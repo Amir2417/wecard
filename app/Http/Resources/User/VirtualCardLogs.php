@@ -27,7 +27,7 @@ class VirtualCardLogs extends JsonResource
             'payable' => getAmount($this->payable,2).' '.get_default_currency_code(),
             'total_charge' => getAmount($this->charge->total_charge,2).' '.get_default_currency_code(),
             'card_amount' => getAmount(@$this->details->card_info->amount,2).' '.get_default_currency_code(),
-            'card_number' => $this->details->card_info->card_pan??$this->details->card_info->maskedPan,
+            'card_number' => $this->details->card_info->card_pan??$this->details->card_info->maskedPan ?? $this->details->card_info->card_number,
             'current_balance' => getAmount($this->available_balance,2).' '.get_default_currency_code(),
             'status' => $this->stringStatus->value ,
             'date_time' => $this->created_at ,

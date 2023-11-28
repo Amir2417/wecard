@@ -284,6 +284,7 @@ class UserController extends Controller
             'withdraw_money'    => WithdrawMoneyLog::collection($withdrawMoney),
         ];
         $transactions = (object)$transactions;
+       
 
         $transaction_types = [
             'add_money'         => PaymentGatewayConst::TYPEADDMONEY,
@@ -294,6 +295,7 @@ class UserController extends Controller
 
         ];
         $transaction_types = (object)$transaction_types;
+        
         $data =[
             'transaction_types' => $transaction_types,
             'transactions'=> $transactions,
