@@ -108,7 +108,7 @@ class AddMoneyController extends Controller
 
          $validator = Validator::make($request->all(), [
             'currency'  => "required",
-            'amount'        => "required|numeric",
+            'amount'    => "required|numeric",
         ]);
         if($validator->fails()){
             $error =  ['error'=>$validator->errors()->all()];
@@ -139,6 +139,7 @@ class AddMoneyController extends Controller
         }
         try{
             $instance = PaymentGatewayApi::init($request->all())->gateway()->api()->get();
+            
             $trx = $instance['response']['id']??$instance['response']['trx']??$instance['response']['reference_id']??$instance['response'];
             $temData = TemporaryData::where('identifier',$trx)->first();
             if(!$temData){

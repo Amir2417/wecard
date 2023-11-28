@@ -311,7 +311,7 @@ class StrowalletVirtualCardController extends Controller
             return Helpers::onlysuccess($message);
         }else{
             $error = ['error' => $data['message']];
-            return Helpers::error($error,null,200);
+            return Helpers::error(['error' => [$data['message']]]);
         }
         
     }
