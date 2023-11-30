@@ -290,8 +290,8 @@ class UserController extends Controller
             'add_money'         => PaymentGatewayConst::TYPEADDMONEY,
             'transfer_money'    => PaymentGatewayConst::TYPETRANSFERMONEY,
             'virtual_card'      => PaymentGatewayConst::VIRTUALCARD,
-            'add_sub_balance'       => PaymentGatewayConst::TYPEADDSUBTRACTBALANCE,
-            'withdraw_money'       => PaymentGatewayConst::WITHDRAWMONEY,
+            'add_sub_balance'   => PaymentGatewayConst::TYPEADDSUBTRACTBALANCE,
+            'withdraw_money'    => PaymentGatewayConst::WITHDRAWMONEY,
 
         ];
         $transaction_types = (object)$transaction_types;

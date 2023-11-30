@@ -21,7 +21,7 @@ class SetupEmailSeeder extends Seeder
             "MAIL_PASSWORD"     => "QP2fsLk?80Ac",
             "MAIL_ENCRYPTION"   => "ssl",
             "MAIL_FROM_ADDRESS" => "system@appdevs.net",
-            "MAIL_FROM_NAME"    => "Quickei",
+            "MAIL_FROM_NAME"    => "Wecard",
         ];
 
         modifyEnv($env_modify_keys);

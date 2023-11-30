@@ -133,12 +133,11 @@ class StrowalletVirtualController extends Controller
             $customer = $user->strowallet_customer;
         }
 
-        // $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-        // if($created_card['status'] == false){
-        //     return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
-        // }
-        // $card_id    = $created_card['data']->card_id;
-        $card_id        = "11ac4e7e-8d28-435e-ac03-a91c60f087bf";
+        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
+        if($created_card['status'] == false){
+            return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
+        }
+        $card_id    = $created_card['data']->card_id;
         $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
         if( $card_details['status'] == false){
             return back()->with(['error' => ["No Card Found!"]]);
@@ -330,7 +329,7 @@ class StrowalletVirtualController extends Controller
         if(!$wallet){
             return back()->with(['error' => ['Wallet not found']]);
         }
-        $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
+        $cardCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
