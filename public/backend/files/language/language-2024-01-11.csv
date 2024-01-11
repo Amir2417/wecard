@@ -394,12 +394,14 @@ Customer Reviews,Customer Reviews,Opiniones de los usuarios,آراء العمل�
 Name,Name,Nombre,اسم,Nom
 Mobile Number,Mobile Number,Número de teléfono móvil,رقم الهاتف المحمول,Numéro de portable
 Enter Name,Enter Name,Ingrese su nombre,أدخل الاسم,Entrez le nom
-Enter Email,Enter Email,Ingrese correo electrónico,أدخل البريد الإلكتروني,Entrer le courrier électronique
+Enter Email,Enter Email,Ingrese correo electrónico,أدخل البريد الإلكتروني,Entrez le courrier électronique
 Enter Subject,Enter Subject,Entrar en el sujeto,أدخل الموضوع,Entrer le sujet
 Write Here,Write Here,Escribe aquí,اكتب هنا,Écrivez ici
-Send Message,Send Message,Enviar mensaje,إرسال الرسالة,Envoyer le message
+Send Message,Send Message,Enviar mensaje,أرسل رسالة,Envoyer le message
 Don't Have An Account?,Don't Have An Account?,¿No tienes una cuenta?,ليس لديك حساب؟,Vous n'avez pas de compte?
 I have agreed with,I have agreed with,He estado de acuerdo con,لقد وافقت مع,Je suis d'accord avec
 Terms Of Use & Privacy Policy,Terms Of Use & Privacy Policy,Términos de uso y política de privacidad,شروط الاستخدام وسياسة الخصوصية,Conditions d'utilisation et politique de confidentialité
 Add Card,Add Card,Agregar tarjeta,إضافة بطاقة,Ajouter une carte
 Line 1,Line 1,Línea 1,خط 1,Ligne 1
+applPassword,applPassword,Appl Word,ApplPassword,applpassword
+applForgetPassword,applForgetPassword,ApplForgetPassword,appforgepspassword,applForgetPassword
