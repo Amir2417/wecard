@@ -36,7 +36,7 @@
                     </div>
                     <div class="or-area">
                         <span class="or-line"></span>
-                        <span class="or-title">Or</span>
+                        <span class="or-title">{{ __("Or") }}</span>
                         <span class="or-line"></span>
                     </div>
                     @if($basic_settings->user_registration)
@@ -54,7 +54,7 @@
         <div class="account-close"></div>
         <div class="account-form-area">
             <div class="account-logo text-center">
-                <a class="site-logo" href="index.html"><img src="{{ get_logo($basic_settings) }}"  data-white_img="{{ get_logo($basic_settings,'white') }}"
+                <a class="site-logo" href="{{ setRoute('index') }}"><img src="{{ get_logo($basic_settings) }}"  data-white_img="{{ get_logo($basic_settings,'white') }}"
                     data-dark_img="{{ get_logo($basic_settings,'dark') }}" alt="logo"></a>
             </div>
             <h5 class="title">{{__("Register Information")}}</h5>

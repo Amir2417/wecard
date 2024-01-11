@@ -30,10 +30,20 @@ class StrowalletVirtualController extends Controller
 
     public function index()
     {
-        $page_title = "Virtual Card";
-        $myCards = StrowalletVirtualCard::where('user_id',auth()->user()->id)->get();
-        $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
-        $transactions = Transaction::auth()->virtualCard()->latest()->take(5)->get();
+        $page_title     = "Virtual Card";
+        $myCards        = StrowalletVirtualCard::where('user_id',auth()->user()->id)->get();
+        $user           = auth()->user();
+        $customer_email = $user->strowallet_customer->customerEmail ?? '';
+        
+        if($customer_email == ''){
+            $customer_card  = 0;
+        }else{
+            $customer_card  = StrowalletVirtualCard::where('customer_email',$customer_email)->count();
+
+        }
+        
+        $cardCharge     = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
+        $transactions   = Transaction::auth()->virtualCard()->latest()->take(5)->get();
         
         $cardApi = $this->api;
         
@@ -44,6 +54,7 @@ class StrowalletVirtualController extends Controller
             'myCards',
             'transactions',
             'cardCharge',
+            'customer_card'
             
         ));
     }
@@ -71,17 +82,14 @@ class StrowalletVirtualController extends Controller
         if($user->strowallet_customer == null){
             $request->validate([
                 'card_amount'       => 'required|numeric|gt:0',
-                'first_name'        => 'required|string',
-                'last_name'         => 'required|string',
+                'first_name'        => ['required', 'string', 'regex:/^[^0-9]+$/'],
+                'last_name'         => ['required', 'string', 'regex:/^[^0-9]+$/'],
                 'house_number'      => 'required|string',
-                'id_number'         => 'required|string',
                 'customer_email'    => 'required|string',
                 'phone'             => 'required|string',
                 'date_of_birth'     => 'required|string',
                 'line1'             => 'required|string',
-                'state'             => 'required|string',
                 'zip_code'          => 'required|string',
-                'city'              => 'required|string',
             ]);
         }else{
             $request->validate([
@@ -132,47 +140,57 @@ class StrowalletVirtualController extends Controller
         }else{
             $customer = $user->strowallet_customer;
         }
+        $user = auth()->user();
+        $customer_email = $user->strowallet_customer->customerEmail;
+        $customer_card  = StrowalletVirtualCard::where('customer_email',$customer_email)->count();
+        if($customer_card > 3){
+            return back()->with(['error' => ['Sorry! You can not create more than three card using the same email address.']]);
+        }else{
 
-        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-        if($created_card['status'] == false){
-            return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
-        }
-        $card_id    = $created_card['data']->card_id;
-        $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-        if( $card_details['status'] == false){
-            return back()->with(['error' => ["No Card Found!"]]);
-        }
+            // $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
+            // if($created_card['status'] == false){
+            //     return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
+            // }
+            // // $card_id    = $created_card['data']->card_id;
+            $card_id        = "11ac4e7e-8d28-435e-ac03-a91c60f087bf";
+            $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
+            if( $card_details['status'] == false){
+                return back()->with(['error' => ["No Card Found!"]]);
+            }
         
-        $strowallet_card                            = new StrowalletVirtualCard();
-        $strowallet_card->user_id                   = $user->id;
-        $strowallet_card->name_on_card              = $card_details['data']['card_detail']['card_holder_name'];
-        $strowallet_card->card_id                   = $card_details['data']['card_detail']['card_id'];
-        $strowallet_card->card_created_date         = $card_details['data']['card_detail']['card_created_date'];
-        $strowallet_card->card_type                 = $card_details['data']['card_detail']['card_type'];
-        $strowallet_card->card_brand                = $card_details['data']['card_detail']['card_brand'];
-        $strowallet_card->card_user_id              = $card_details['data']['card_detail']['card_user_id'];
-        $strowallet_card->reference                 = $card_details['data']['card_detail']['reference'];
-        $strowallet_card->card_status               = $card_details['data']['card_detail']['card_status'];
-        $strowallet_card->customer_id               = $card_details['data']['card_detail']['customer_id'];
-        $strowallet_card->card_name                 = $customer->card_brand;
-        $strowallet_card->card_number               = $card_details['data']['card_detail']['card_number'];
-        $strowallet_card->last4                     = $card_details['data']['card_detail']['last4'];
-        $strowallet_card->cvv                       = $card_details['data']['card_detail']['cvv'];
-        $strowallet_card->expiry                    = $card_details['data']['card_detail']['expiry'];
-        $strowallet_card->customer_email            = $card_details['data']['card_detail']['customer_email'];
-        $strowallet_card->balance                   = $card_details['data']['card_detail']['balance'];
-        $strowallet_card->save();
-
-        // dd($card_details['data']['card_detail']);
-        $trx_id =  'CB'.getTrxNum();
-        try{
-            $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
-            $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
-            
-            return redirect()->route("user.strowallet.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
-        }catch(Exception $e){
-            return back()->with(['error' => [$e->getMessage()]]);
+            $strowallet_card                            = new StrowalletVirtualCard();
+            $strowallet_card->user_id                   = $user->id;
+            $strowallet_card->name_on_card              = $card_details['data']['card_detail']['card_holder_name'];
+            $strowallet_card->card_id                   = $card_details['data']['card_detail']['card_id'];
+            $strowallet_card->card_created_date         = $card_details['data']['card_detail']['card_created_date'];
+            $strowallet_card->card_type                 = $card_details['data']['card_detail']['card_type'];
+            $strowallet_card->card_brand                = $card_details['data']['card_detail']['card_brand'];
+            $strowallet_card->card_user_id              = $card_details['data']['card_detail']['card_user_id'];
+            $strowallet_card->reference                 = $card_details['data']['card_detail']['reference'];
+            $strowallet_card->card_status               = $card_details['data']['card_detail']['card_status'];
+            $strowallet_card->customer_id               = $card_details['data']['card_detail']['customer_id'];
+            $strowallet_card->card_name                 = $customer->card_brand;
+            $strowallet_card->card_number               = $card_details['data']['card_detail']['card_number'];
+            $strowallet_card->last4                     = $card_details['data']['card_detail']['last4'];
+            $strowallet_card->cvv                       = $card_details['data']['card_detail']['cvv'];
+            $strowallet_card->expiry                    = $card_details['data']['card_detail']['expiry'];
+            $strowallet_card->customer_email            = $card_details['data']['card_detail']['customer_email'];
+            $strowallet_card->balance                   = $card_details['data']['card_detail']['balance'];
+            $strowallet_card->save();
+    
+            // dd($card_details['data']['card_detail']);
+            $trx_id =  'CB'.getTrxNum();
+            try{
+                $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
+                $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
+                
+                return redirect()->route("user.strowallet.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
+            }catch(Exception $e){
+                return back()->with(['error' => [$e->getMessage()]]);
+            }
         }
+
+        
     }
     public function insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable) {
         $trx_id = $trx_id;
@@ -279,7 +297,7 @@ class StrowalletVirtualController extends Controller
                 $success = ['success' => [' Card Freeze successfully']];
                 return Response::success($success,null,200);
             }else{
-                $error = ['error' => $data['message']];
+                $error = ['error' => [$data['message']]];
                 return Response::error($error,null,200);
             }
         }else{
@@ -303,7 +321,7 @@ class StrowalletVirtualController extends Controller
                 $success = ['success' => [' Card UnFreeze successfully']];
                 return Response::success($success,null,200);
             }else{
-                $error = ['error' => $data['message']];
+                $error = ['error' => [$data['message']]];
                 return Response::error($error,null,200);
             }
         }

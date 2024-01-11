@@ -27,7 +27,7 @@
 
                   </div>
                   <div class="comment pt-2">
-                    <P><span class="text--base">{{ @$totalTestimonial }}+</span> Customer Reviews</P>
+                    <P><span class="text--base">{{ @$totalTestimonial }}+</span> {{ __("Customer Reviews") }}</P>
                   </div>
                 </div>
              </div>

@@ -21,7 +21,7 @@
                 <h3 class="title">{{ __(@$page_title) }}</h3>
                 <div class="header-search-wrapper">
                     <div class="position-relative">
-                        <input class="form-control" type="text" name="search" placeholder="Ex: Transaction, Add Money" aria-label="Search">
+                        <input class="form-control" type="text" name="search" placeholder="{{ __("Ex: Transaction, Add Money") }}" aria-label="Search">
                         <span class="las la-search"></span>
                     </div>
                 </div>

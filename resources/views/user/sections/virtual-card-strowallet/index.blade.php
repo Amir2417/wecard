@@ -19,7 +19,9 @@
         <h3 class="title">{{ __(@$page_title) }} <i class="las la-arrow-right"></i></h3>
         <div class="dashboard-btn-wrapper">
             <div class="dashboard-btn">
-                <a href="javascript:void(0)" class="btn--base buyCard-strowallet"> <i class="las la-plus"></i> {{__("Create A New Card")}}</a>
+                @if ($customer_card < 3 )
+                    <a href="javascript:void(0)" class="btn--base buyCard-strowallet"> <i class="las la-plus"></i> {{__("Create A New Card")}}</a>
+                @endif
             </div>
         </div>
     </div>

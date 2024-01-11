@@ -18,7 +18,7 @@
                 </button>
                 <div class="notification-wrapper">
                     <div class="notification-header">
-                        <h5 class="title">Notification</h5>
+                        <h5 class="title">{{ __("Notification") }}</h5>
                     </div>
                     <ul class="notification-list">
                         @foreach (get_user_notifications() ?? [] as $item)

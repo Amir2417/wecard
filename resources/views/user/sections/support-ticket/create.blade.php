@@ -33,14 +33,14 @@
 
                             <div class="col-xl-12 col-lg-12 form-group">
                                 @include('admin.components.form.input',[
-                                    'label'         => "Subject<span>*</span>",
+                                    'label'         => __("Subject")."<span>*</span>",
                                     'name'          => "subject",
                                     'placeholder'   => "Enter Subject...",
                                 ])
                             </div>
                             <div class="col-xl-12 col-lg-12 form-group">
                                 @include('admin.components.form.textarea',[
-                                    'label'         => "Message <span>*</span>",
+                                    'label'         => __('Message').'<span class="text--base">'.'('.__("Optional").')'.'</span>',
                                     'name'          => "desc",
                                     'placeholder'   => "Write Here…",
                                 ])

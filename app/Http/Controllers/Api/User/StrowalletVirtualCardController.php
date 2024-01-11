@@ -335,17 +335,14 @@ class StrowalletVirtualCardController extends Controller
         if($user->strowallet_customer == null){
             $validator = Validator::make($request->all(), [
                 'card_amount'       => 'required|numeric|gt:0',
-                'first_name'        => 'required|string',
-                'last_name'         => 'required|string',
+                'first_name'        => ['required', 'string', 'regex:/^[^0-9]+$/'],
+                'last_name'         => ['required', 'string', 'regex:/^[^0-9]+$/'],
                 'house_number'      => 'required|string',
-                'id_number'         => 'required|string',
                 'customer_email'    => 'required|string',
                 'phone'             => 'required|string',
                 'date_of_birth'     => 'required|string',
                 'line1'             => 'required|string',
-                'state'             => 'required|string',
                 'zip_code'          => 'required|string',
-                'city'              => 'required|string',
             ]);
         }else{
             $validator = Validator::make($request->all(), [
@@ -405,49 +402,60 @@ class StrowalletVirtualCardController extends Controller
             $customer = $user->strowallet_customer;
         }
 
-        $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-        if($created_card['status'] == false){
-            return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
-        }
-        $card_id    = $created_card['data']->card_id;
-        $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
-        if( $card_details['status'] == false){
-            $error = ['error'=>["No Card Found!"]];
+        $user = auth()->user();
+        $customer_email = $user->strowallet_customer->customerEmail;
+        $customer_card  = StrowalletVirtualCard::where('customer_email',$customer_email)->count();
+        if($customer_card > 3){
+            $error = ['error'=>["Sorry! You can not create more than three card using the same email address."]];
             return Helpers::error($error);
-        }
-        
-        $strowallet_card                            = new StrowalletVirtualCard();
-        $strowallet_card->user_id                   = $user->id;
-        $strowallet_card->name_on_card              = $card_details['data']['card_detail']['card_holder_name'];
-        $strowallet_card->card_id                   = $card_details['data']['card_detail']['card_id'];
-        $strowallet_card->card_created_date         = $card_details['data']['card_detail']['card_created_date'];
-        $strowallet_card->card_type                 = $card_details['data']['card_detail']['card_type'];
-        $strowallet_card->card_brand                = $card_details['data']['card_detail']['card_brand'];
-        $strowallet_card->card_user_id              = $card_details['data']['card_detail']['card_user_id'];
-        $strowallet_card->reference                 = $card_details['data']['card_detail']['reference'];
-        $strowallet_card->card_status               = $card_details['data']['card_detail']['card_status'];
-        $strowallet_card->customer_id               = $card_details['data']['card_detail']['customer_id'];
-        $strowallet_card->card_name                 = $customer->card_brand;
-        $strowallet_card->card_number               = $card_details['data']['card_detail']['card_number'];
-        $strowallet_card->last4                     = $card_details['data']['card_detail']['last4'];
-        $strowallet_card->cvv                       = $card_details['data']['card_detail']['cvv'];
-        $strowallet_card->expiry                    = $card_details['data']['card_detail']['expiry'];
-        $strowallet_card->customer_email            = $card_details['data']['card_detail']['customer_email'];
-        $strowallet_card->balance                   = $card_details['data']['card_detail']['balance'];
-        $strowallet_card->save();
+        }else{
+
+            $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
+            if($created_card['status'] == false){
+                return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
+            }
+            $card_id    = $created_card['data']->card_id;
+            $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
+            if( $card_details['status'] == false){
+                $error = ['error'=>["No Card Found!"]];
+                return Helpers::error($error);
+            }
 
         
-        $trx_id =  'CB'.getTrxNum();
-        try{
-            $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
-            $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
-            $message =  ['success'=>['Card Successfully Buy']];
-            return Helpers::onlysuccess($message);
+        
+            $strowallet_card                            = new StrowalletVirtualCard();
+            $strowallet_card->user_id                   = $user->id;
+            $strowallet_card->name_on_card              = $card_details['data']['card_detail']['card_holder_name'];
+            $strowallet_card->card_id                   = $card_details['data']['card_detail']['card_id'];
+            $strowallet_card->card_created_date         = $card_details['data']['card_detail']['card_created_date'];
+            $strowallet_card->card_type                 = $card_details['data']['card_detail']['card_type'];
+            $strowallet_card->card_brand                = $card_details['data']['card_detail']['card_brand'];
+            $strowallet_card->card_user_id              = $card_details['data']['card_detail']['card_user_id'];
+            $strowallet_card->reference                 = $card_details['data']['card_detail']['reference'];
+            $strowallet_card->card_status               = $card_details['data']['card_detail']['card_status'];
+            $strowallet_card->customer_id               = $card_details['data']['card_detail']['customer_id'];
+            $strowallet_card->card_name                 = $customer->card_brand;
+            $strowallet_card->card_number               = $card_details['data']['card_detail']['card_number'];
+            $strowallet_card->last4                     = $card_details['data']['card_detail']['last4'];
+            $strowallet_card->cvv                       = $card_details['data']['card_detail']['cvv'];
+            $strowallet_card->expiry                    = $card_details['data']['card_detail']['expiry'];
+            $strowallet_card->customer_email            = $card_details['data']['card_detail']['customer_email'];
+            $strowallet_card->balance                   = $card_details['data']['card_detail']['balance'];
+            $strowallet_card->save();
+    
             
-        }catch(Exception $e){
-            
-            $error =  ['error'=>['Something Went Wrong! Please Try Again.']];
-            return Helpers::error($error);
+            $trx_id =  'CB'.getTrxNum();
+            try{
+                $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
+                $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
+                $message =  ['success'=>['Card Successfully Buy']];
+                return Helpers::onlysuccess($message);
+                
+            }catch(Exception $e){
+                
+                $error =  ['error'=>['Something Went Wrong! Please Try Again.']];
+                return Helpers::error($error);
+            }
         }
     }
     public function insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable) {

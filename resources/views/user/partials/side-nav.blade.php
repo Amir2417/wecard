@@ -120,7 +120,7 @@
 
             var actionRoute =  "{{ setRoute('user.logout') }}";
             var target      = 1;
-            var message     = `Are you sure to <strong>Logout</strong>?`;
+            var message     = `{{ __("Are you sure to") }} <strong>{{ __("Logout") }}</strong>?`;
 
             openAlertModal(actionRoute,target,message,"Logout","POST");
         });

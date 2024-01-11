@@ -91,46 +91,31 @@
                                             <input type="text" class="form--control" placeholder="{{ __("Enter House Number") }}" name="house_number" >
                                         </div>
                                         <div class="form-group ms-2">
-                                            <label>{{__("ID Number")}}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter ID Number") }}" name="id_number" >
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-6 d-flex">
-                                        <div class="form-group ms-2">
                                             <label>{{__("Customer Email")}}<span>*</span></label>
                                             <input type="email" class="form--control" placeholder="{{ __("Enter Customer Email") }}" name="customer_email" value="{{ $user->email }}">
                                         </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-6 d-flex">
                                         <div class="form-group ms-2">
                                             <label>{{__("Phone Number")}}<span>*</span></label>
                                             <input type="text" class="form--control" placeholder="{{ __("Enter Phone Number") }}" name="phone" value="{{ $user->full_mobile }}">
                                         </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-6 d-flex">
                                         <div class="form-group ms-2">
                                             <label>{{__("Date Of Birth")}}<span>*</span></label>
                                             <input type="text" class="form--control" placeholder="{{ __("Date of birth in mm/dd/yyyy") }}" name="date_of_birth" >
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-6 d-flex">
+                                        <div class="form-group">
+                                            <label>{{__("Zip Code")}}<span>*</span></label>
+                                            <input type="text" class="form--control" placeholder="{{ __("Enter Zip Code") }}" name="zip_code" value="{{ $user->address->zip }}">
                                         </div>
                                         <div class="form-group ms-2">
                                             <label>{{__("Line 1")}}<span>*</span></label>
                                             <input type="text" class="form--control" placeholder="{{ __("Enter Line 1") }}" name="line1" >
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-6 d-flex">
-                                        <div class="form-group ms-2">
-                                            <label>{{__("State")}}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter State") }}" name="state" value="{{ $user->address->state }}">
-                                        </div>
-                                        <div class="form-group ms-2">
-                                            <label>{{__("Zip Code")}}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter Zip Code") }}" name="zip_code" value="{{ $user->address->zip }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-6 d-flex">
-                                        <div class="form-group ms-2">
-                                            <label>{{__("City")}}<span>*</span></label>
-                                            <input type="text" class="form--control" placeholder="{{ __("Enter City") }}" name="city" value="{{ $user->address->city }}">
-                                        </div>
-                                    </div>
+                                    
                                 @endif
                             </div>
                         </div>
