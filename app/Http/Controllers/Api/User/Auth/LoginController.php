@@ -39,23 +39,23 @@ class LoginController extends Controller
         }
         $user = User::where('username', trim(strtolower($request->email)))->orWhere('email',$request->email)->first();
         if(!$user){
-            $error = ['error'=>['User does not exist']];
+            $error = ['error'=>[__('User does not exist')]];
             return ApiHelpers::validation($error);
         }
         if (Hash::check($request->password, $user->password)) {
             if($user->status == 0){
-                $error = ['error'=>['Account Has been Suspended']];
+                $error = ['error'=>[__('Account Has been Suspended')]];
                 return ApiHelpers::validation($error);
             }
             $this->refreshUserWallets($user);
             $this->createLoginLog($user);
             $token = $user->createToken('Laravel Password Grant Client')->accessToken;
             $data = ['token' => $token, 'user' => $user, ];
-            $message =  ['success'=>['Login Successful']];
+            $message =  ['success'=>[__('Login Successful')]];
             return ApiHelpers::success($data,$message);
 
         } else {
-            $error = ['error'=>['Incorrect Password']];
+            $error = ['error'=>[__('Incorrect Password')]];
             return ApiHelpers::error($error);
         }
 
@@ -121,20 +121,20 @@ class LoginController extends Controller
                 DB::commit();
             }catch(Exception $e) {
                 DB::rollBack();
-                $error = ['error'=>['Something went worng! Please try again']];
+                $error = ['error'=>[__('Something went worng! Please try again.')]];
                 return ApiHelpers::error($error);
             }
         }
 
         $data = ['token' => $token, 'user' => $user, ];
-        $message =  ['success'=>['Registration Successful']];
+        $message =  ['success'=>[__('Registration Successful')]];
         return ApiHelpers::success($data,$message);
 
     }
 
     public function logout(){
         Auth::user()->token()->revoke();
-        $message = ['success'=>['Logout Successful']];
+        $message = ['success'=>[__('Logout Successful')]];
         return ApiHelpers::onlysuccess($message);
 
     }

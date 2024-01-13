@@ -110,7 +110,7 @@ class StripeVirtualController extends Controller
             'cardCharge'=>(object)$cardCharge,
             'transactions'   => $transactions,
         ];
-        $message =  ['success'=>['Virtual Card Stripe']];
+        $message =  ['success'=>[__('Virtual Card Stripe')]];
         return Helpers::success($data,$message);
     }
     public function cardDetails(){
@@ -125,7 +125,7 @@ class StripeVirtualController extends Controller
         $user = auth()->user();
         $myCard = StripeVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$myCard){
-            $error = ['error'=>['Sorry, card not found!']];
+            $error = ['error'=>[__('Sorry, Card Not Found!')]];
             return Helpers::error($error);
         }
         $myCards = StripeVirtualCard::where('card_id',$card_id)->where('user_id',$user->id)->get()->map(function($data){
@@ -157,7 +157,7 @@ class StripeVirtualController extends Controller
             'base_curr' => get_default_currency_code(),
             'card_details'=> $myCards,
         ];
-        $message =  ['success'=>['Virtual Card Details']];
+        $message =  ['success'=>[__('Virtual Card Details')]];
         return Helpers::success($data,$message);
     }
     public function cardTransaction() {
@@ -172,7 +172,7 @@ class StripeVirtualController extends Controller
         $user = auth()->user();
         $card = StripeVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Sorry, Card Not Found!']];
+            $error = ['error'=>[__('Sorry, Card Not Found!')]];
             return Helpers::error($error);
         }
         $card_truns =   getStripeCardTransactions($card->card_id);
@@ -194,7 +194,7 @@ class StripeVirtualController extends Controller
             'cardTransactions' => $cardTransactions
         ];
 
-        $message = ['success' => ['Virtual Card Transactions']];
+        $message = ['success' => [__('Virtual Card Transactions')]];
         return Helpers::success($data, $message);
 
 
@@ -211,7 +211,7 @@ class StripeVirtualController extends Controller
         $user = auth()->user();
         $targetCard =  StripeVirtualCard::where('card_id',$validated['card_id'])->where('user_id',$user->id)->first();
         if(!$targetCard){
-            $error = ['error'=>['Something Is Wrong In Your Card']];
+            $error = ['error'=>[__('Something Is Wrong In Your Card')]];
             return Helpers::error($error);
         };
         $result = getSensitiveData( $targetCard->card_id);
@@ -219,7 +219,7 @@ class StripeVirtualController extends Controller
         $data =[
             'sensitive_data' => $result,
         ];
-        $message =  ['success'=>['Virtual Card Sensitive Data']];
+        $message =  ['success'=>[__('Virtual Card Sensitive Data')]];
         return Helpers::success($data,$message);
     }
     public function cardInactive(Request $request){
@@ -235,11 +235,11 @@ class StripeVirtualController extends Controller
         $status = 'inactive';
         $card = StripeVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Something Is Wrong In Your Card']];
+            $error = ['error'=>[__('Something Is Wrong In Your Card')]];
             return Helpers::error($error);
         }
         if($card->status == false){
-            $error = ['error'=>['Sorry,This Card Is Already Inactive']];
+            $error = ['error'=>[__('Sorry,This Card Is Already Inactive')]];
             return Helpers::error($error);
         }
         $result = cardActiveInactive($card->card_id,$status);
@@ -247,10 +247,10 @@ class StripeVirtualController extends Controller
             if($result['status'] == true){
                 $card->status = false;
                 $card->save();
-                $message =  ['success'=>['Card Inactive Successfully!']];
+                $message =  ['success'=>[__('Card Inactive Successfully!')]];
                 return Helpers::onlysuccess($message);
             }elseif($result['status'] == false){
-                $error = ['error'=>[$result['message']??"Something Is Wrong"]];
+                $error = ['error'=>[$result['message']??__("Something is wrong")]];
                 return Helpers::error($error);
             }
         }
@@ -269,11 +269,11 @@ class StripeVirtualController extends Controller
         $status = 'active';
         $card = StripeVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Something Is Wrong In Your Card']];
+            $error = ['error'=>[__('Something Is Wrong In Your Card')]];
             return Helpers::error($error);
         }
         if($card->status == true){
-            $error = ['error'=>['Sorry,This Card Is Already Active']];
+            $error = ['error'=>[__('Sorry,This Card Is Already Active')]];
             return Helpers::error($error);
         }
         $result = cardActiveInactive($card->card_id,$status);
@@ -281,10 +281,10 @@ class StripeVirtualController extends Controller
             if($result['status'] == true){
                 $card->status = true;
                 $card->save();
-                $message =  ['success'=>['Card Active Successfully!']];
+                $message =  ['success'=>[__('Card Active Successfully!')]];
                 return Helpers::onlysuccess($message);
             }elseif($result['status'] == false){
-                $error = ['error'=>[$result['message']??"Something Is Wrong"]];
+                $error = ['error'=>[$result['message']??__("Something is wrong")]];
                 return Helpers::error($error);
             }
         }
@@ -303,27 +303,27 @@ class StripeVirtualController extends Controller
         $user = auth()->user();
         if($basic_setting->kyc_verification){
             if( $user->kyc_verified == 0){
-                $error = ['error'=>['Please submit kyc information!']];
+                $error = ['error'=>[__('Please submit kyc information!')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 2){
-                $error = ['error'=>['Please wait before admin approved your kyc information']];
+                $error = ['error'=>[__('Please wait before admin approved your kyc information')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 3){
-                $error = ['error'=>['Admin rejected your kyc information, Please re-submit again']];
+                $error = ['error'=>[__('Admin rejected your kyc information, Please re-submit again')]];
                 return Helpers::error($error);
             }
         }
         $amount = $request->fund_amount;
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            $error = ['error'=>['Wallet Not Found']];
+            $error = ['error'=>[__('Wallet Not Found')]];
             return Helpers::error($error);
         }
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
 
         if(!$baseCurrency){
-            $error = ['error'=>['Default Currency Not Setup Yet']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet')]];
             return Helpers::error($error);
         }
         $rate = $baseCurrency->rate;
@@ -332,7 +332,7 @@ class StripeVirtualController extends Controller
         $maxLimit =  $cardCharge->max_limit *  $rate;
 
         if($amount < $minLimit || $amount > $maxLimit) {
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
 
@@ -342,7 +342,7 @@ class StripeVirtualController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            $error = ['error'=>['Sorry, insufficient balance']];
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
             return Helpers::error($error);
         }
 
@@ -456,10 +456,10 @@ class StripeVirtualController extends Controller
             try{
                 $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable);
                 $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$v_card->maskedPan);
-                $message =  ['success'=>['Card Buy Successfully']];
+                $message =  ['success'=>[__('Card Buy Successfully')]];
                 return Helpers::onlysuccess($message);
             }catch(Exception $e){
-                $error = ['error'=>["Something Went Wrong! Please Try Again."]];
+                $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
                 return Helpers::error($error);
             }
 
@@ -496,7 +496,7 @@ class StripeVirtualController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went wrong! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
         return $id;
@@ -528,7 +528,7 @@ class StripeVirtualController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went wrong! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
     }

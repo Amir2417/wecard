@@ -95,7 +95,7 @@ class TransferMoneyController extends Controller
             'userWallet'=>  (object)$userWallet,
             'transactions'   => $transactions,
         ];
-        $message =  ['success'=>['Transfer Money Information']];
+        $message =  ['success'=>[__('Transfer Money Information')]];
         return Helpers::success($data,$message);
     }
     public function checkUser(Request $request){
@@ -110,18 +110,18 @@ class TransferMoneyController extends Controller
         if(check_email($request->email)) $column = "email";
         $exist = User::where($column,$request->email)->first();
         if( !$exist){
-            $error = ['error'=>['User not found']];
+            $error = ['error'=>[__('User not found')]];
             return Helpers::error($error);
         }
         $user = auth()->user();
         if(@$exist && $user->email == @$exist->email){
-             $error = ['error'=>['Can\'t transfer money to your own']];
+             $error = ['error'=>[__('Can\'t transfer money to your own')]];
             return Helpers::error($error);
         }
         $data =[
             'exist_user'   => $exist,
             ];
-        $message =  ['success'=>['Valid user for transfer money.']];
+        $message =  ['success'=>[__('Valid user for transfer money.')]];
         return Helpers::success($data,$message);
     }
     public function confirmedTransferMoney(Request $request){
@@ -137,13 +137,13 @@ class TransferMoneyController extends Controller
         $user = auth()->user();
         if($basic_setting->kyc_verification){
             if( $user->kyc_verified == 0){
-                $error = ['error'=>['Please submit kyc information!']];
+                $error = ['error'=>[__('Please submit kyc information')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 2){
-                $error = ['error'=>['Please wait before admin approved your kyc information']];
+                $error = ['error'=>[__('Please wait before admin approved your kyc information')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 3){
-                $error = ['error'=>['Admin rejected your kyc information, Please re-submit again']];
+                $error = ['error'=>[__('Admin rejected your kyc information, Please re-submit again')]];
                 return Helpers::error($error);
             }
         }
@@ -152,35 +152,35 @@ class TransferMoneyController extends Controller
         $sendMoneyCharge = TransactionSetting::where('slug','transfer-money')->where('status',1)->first();
         $userWallet = UserWallet::where('user_id',$user->id)->first();
         if(!$userWallet){
-            $error = ['error'=>['Sender wallet not found']];
+            $error = ['error'=>[__('Sender wallet not found')]];
             return Helpers::error($error);
         }
         $baseCurrency = Currency::default();
         if(!$baseCurrency){
-            $error = ['error'=>['Default currency not found']];
+            $error = ['error'=>[__('Default currency not found')]];
             return Helpers::error($error);
         }
         $rate = $baseCurrency->rate;
         $email = $request->email;
         $receiver = User::where('email',$email)->first();
         if(!$receiver){
-            $error = ['error'=>['Receiver not exist']];
+            $error = ['error'=>[__('Receiver not exist')]];
             return Helpers::error($error);
         }
         if($receiver->email ==  $user->email){
-            $error = ['error'=>['Can\'t transfer money to your own']];
+            $error = ['error'=>[__('Can\'t transfer money to your own')]];
             return Helpers::error($error);
         }
         $receiverWallet = UserWallet::where('user_id',$receiver->id)->first();
         if(!$receiverWallet){
-            $error = ['error'=>['Receiver wallet not found']];
+            $error = ['error'=>[__('Receiver wallet not found')]];
             return Helpers::error($error);
         }
 
         $minLimit =  $sendMoneyCharge->min_limit *  $rate;
         $maxLimit =  $sendMoneyCharge->max_limit *  $rate;
         if($amount < $minLimit || $amount > $maxLimit) {
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         //charge calculations
@@ -190,7 +190,7 @@ class TransferMoneyController extends Controller
         $payable = $total_charge + $amount;
         $recipient = $amount;
         if($payable > $userWallet->balance ){
-            $error = ['error'=>['Sorry, insufficient balance']];
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
             return Helpers::error($error);
         }
 
@@ -206,10 +206,10 @@ class TransferMoneyController extends Controller
                  $this->insertReceiverCharges( $fixedCharge,$percent_charge, $total_charge, $amount,$user,$receiverTrans,$receiver);
             }
 
-            $message =  ['success'=>['Transfer Money successful to '.$receiver->fullname]];
+            $message =  ['success'=>[__('Transfer Money successful to').$receiver->fullname]];
             return Helpers::onlysuccess($message);
         }catch(Exception $e) {
-            $error = ['error'=>['Something is wrong, Please try again later']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
 
         }
@@ -245,7 +245,7 @@ class TransferMoneyController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something is wrong, Please try again later']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
         }
         return $id;
@@ -282,7 +282,7 @@ class TransferMoneyController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something is wrong, Please try again later']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
         }
     }
@@ -317,7 +317,7 @@ class TransferMoneyController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something is wrong, Please try again later']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
         }
         return $id;
@@ -354,7 +354,7 @@ class TransferMoneyController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something is wrong, Please try again later']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
         }
     }

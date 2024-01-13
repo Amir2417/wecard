@@ -111,7 +111,7 @@ class VirtualCardController extends Controller
             'cardCharge'=>(object)$cardCharge,
             'transactions'   => $transactions,
             ];
-            $message =  ['success'=>['Virtual Card']];
+            $message =  ['success'=>[__('Virtual Card')]];
             return Helpers::success($data,$message);
     }
     public function charges(){
@@ -131,7 +131,7 @@ class VirtualCardController extends Controller
             'base_curr' => get_default_currency_code(),
             'cardCharge'=>(object)$cardCharge
             ];
-            $message =  ['success'=>['Fess & Charges']];
+            $message =  ['success'=>[__('Fess & Charges')]];
             return Helpers::success($data,$message);
 
     }
@@ -148,7 +148,7 @@ class VirtualCardController extends Controller
         $user = auth()->user();
         $myCard = VirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$myCard){
-            $error = ['error'=>['Sorry, card not found!']];
+            $error = ['error'=>[__('Sorry, card not found!')]];
             return Helpers::error($error);
         }
         $myCards = VirtualCard::where('card_id',$card_id)->where('user_id',$user->id)->get()->map(function($data){
@@ -157,12 +157,7 @@ class VirtualCardController extends Controller
                 "block" =>      0,
                 "unblock" =>     1,
                 ];
-                // if($data->is_active == 1){
-                // $status = "Unblock";
-                // }else if($data->is_active == 0){
-                // $status = "Block";
-
-                // }
+               
             return[
                 'id' => $data->id,
                 'name' => $data->name,
@@ -192,7 +187,7 @@ class VirtualCardController extends Controller
             'user'=>   $user,
 
             ];
-            $message =  ['success'=>['Virtual Card Details']];
+            $message =  ['success'=>[__('Virtual Card Details')]];
             return Helpers::success($data,$message);
     }
     public function cardTransaction() {
@@ -249,7 +244,7 @@ class VirtualCardController extends Controller
             'cardTransactions' => $vals ? $vals->all() : []
         ];
 
-        $message = ['success' => ['Virtual Card Transactions']];
+        $message = ['success' => [__('Virtual Card Transactions')]];
         return Helpers::success($data, $message);
 
 
@@ -268,7 +263,7 @@ class VirtualCardController extends Controller
         $status = 'block';
         $card = VirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Sorry, invalid request!']];
+            $error = ['error'=>[__('Sorry, invalid request!')]];
             return Helpers::error($error);
         }
         $curl = curl_init();
@@ -294,17 +289,17 @@ class VirtualCardController extends Controller
             if ($result['status'] === 'success' && array_key_exists('data', $result)) {
                 $card->is_active = 0;
                 $card->save();
-                $message =  ['success'=>['Card block successfully!']];
+                $message =  ['success'=>[__('Card Block Successfully')]];
                 return Helpers::onlysuccess($message);
             } elseif ($result['status'] === 'error' && $result['message'] === 'Card has been blocked previously') {
                 $card->is_active = 0;
                 $card->save();
-                $error = ['error'=>['Card has been blocked previously']];
+                $error = ['error'=>[__('Card has been blocked previously')]];
                 return Helpers::error($error);
             } elseif ($result['status'] === 'error' && $result['message'] === 'Card not found. Please check and try again') {
                 $card->terminate = 1;
                 $card->save();
-                $error = ['error'=>['This Card has been terminated previously.']];
+                $error = ['error'=>[__('This Card has been terminated previously.')]];
                 return Helpers::error($error);
             } else {
                 $error = ['error'=>[$result['message']]];
@@ -326,7 +321,7 @@ class VirtualCardController extends Controller
         $status = 'unblock';
         $card = VirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Sorry, invalid request!']];
+            $error = ['error'=>[__('Sorry, invalid request!')]];
             return Helpers::error($error);
         }
         $curl = curl_init();
@@ -353,17 +348,17 @@ class VirtualCardController extends Controller
             if ( $result['status'] === 'success' && array_key_exists('data', $result)) {
                 $card->is_active = 1;
                 $card->save();
-                $message =  ['success'=>['Card unblock successfully!']];
+                $message =  ['success'=>[__('Card Unblock Successfully!')]];
                 return Helpers::onlysuccess($message);
             } elseif ( $result['status'] === 'error' && $result['message'] === 'card is not blocked' ) {
                 $card->is_active = 1;
                 $card->save();
-                $error = ['error'=>['Card has been unblocked previously']];
+                $error = ['error'=>[__('Card has been unblocked previously')]];
                 return Helpers::error($error);
             }elseif ( $result['status'] === 'error' && $result['message'] === 'Card not found. Please check and try again' ) {
                 $card->terminate = 1;
                 $card->save();
-                $error = ['error'=>['This Card has been terminated previously.']];
+                $error = ['error'=>[__('This Card has been terminated previously.')]];
                 return Helpers::error($error);
             } else {
                 $error = ['error'=>[$result['message']]];
@@ -385,20 +380,20 @@ class VirtualCardController extends Controller
         $amount = $request->card_amount;
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            $error = ['error'=>['Wallet not found']];
+            $error = ['error'=>[__('Wallet Not Found')]];
             return Helpers::error($error);
         }
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
-            $error = ['error'=>['Default currency not setup yet']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet')]];
             return Helpers::error($error);
         }
         $minLimit =  $cardCharge->min_limit *  $rate;
         $maxLimit =  $cardCharge->max_limit *  $rate;
         if($amount < $minLimit || $amount > $maxLimit) {
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         //charge calculations
@@ -407,7 +402,7 @@ class VirtualCardController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            $error = ['error'=>['Sorry, insufficient balance']];
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
             return Helpers::error($error);
         }
         $currency =$baseCurrency->code;
@@ -476,10 +471,10 @@ class VirtualCardController extends Controller
                 $trx_id =  'CB'.getTrxNum();
                 $sender = $this->insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable);
                 $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$v_card->masked_card);
-                $message =  ['success'=>['Card Buy Successfully']];
+                $message =  ['success'=>[__('Card Buy Successfully')]];
                 return Helpers::onlysuccess($message);
             }else {
-                $error = ['error'=>[@$result['message']??'Please wait a moment & try again later.']];
+                $error = ['error'=>[@$result['message']??__('Please wait a moment & try again later.')]];
                 return Helpers::error($error);
             }
         }
@@ -500,27 +495,27 @@ class VirtualCardController extends Controller
         $myCard =  VirtualCard::where('user_id',$user->id)->where('card_id',$request->card_id)->first();
 
         if(!$myCard){
-            $error = ['error'=>['Your Card not found']];
+            $error = ['error'=>[__('Your Card not found')]];
             return Helpers::error($error);
         }
 
         $amount = $request->fund_amount;
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            $error = ['error'=>['Wallet not found']];
+            $error = ['error'=>[__('Wallet Not Found')]];
             return Helpers::error($error);
         }
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
-            $error = ['error'=>['Default currency not setup yet']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet')]];
             return Helpers::error($error);
         }
         $minLimit =  $cardCharge->min_limit *  $rate;
         $maxLimit =  $cardCharge->max_limit *  $rate;
         if($amount < $minLimit || $amount > $maxLimit) {
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         $fixedCharge = $cardCharge->fixed_charge *  $rate;
@@ -528,7 +523,7 @@ class VirtualCardController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            $error = ['error'=>['Sorry, insufficient balance']];
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
             return Helpers::error($error);
 
         }
@@ -562,11 +557,11 @@ class VirtualCardController extends Controller
             $trx_id = 'CF'.getTrxNum();
             $sender = $this->insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable);
             $this->insertFundCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$myCard->masked_card,$amount);
-            $message =  ['success'=>['Card Funded Successfully']];
+            $message =  ['success'=>[__('Card Funded Successfully')]];
             return Helpers::onlysuccess($message);
 
         }else{
-            $error = ['error'=>[@$result->message??'Please wait a moment & try again later.']];
+            $error = ['error'=>[@$result->message??__('Please wait a moment & try again later.')]];
             return Helpers::error($error);
         }
 
@@ -601,7 +596,7 @@ class VirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
         return $id;
@@ -633,7 +628,7 @@ class VirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
     }
@@ -667,7 +662,7 @@ class VirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
         return $id;
@@ -699,7 +694,7 @@ class VirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
     }

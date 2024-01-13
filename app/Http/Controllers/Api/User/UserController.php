@@ -148,7 +148,7 @@ class UserController extends Controller
         'active_cards'   =>  $virtualCards,
         'transactions'   =>   $transactions,
         ];
-        $message =  ['success'=>['User Dashboard']];
+        $message =  ['success'=>[__('User Dashboard')]];
         return Helpers::success($data,$message);
     }
     public function profile(){
@@ -159,7 +159,7 @@ class UserController extends Controller
             'user'         =>   $user,
             'countries' =>get_all_countries()
         ];
-        $message =  ['success'=>['User Profile']];
+        $message =  ['success'=>[__('User Profile')]];
         return Helpers::success($data,$message);
     }
     public function profileUpdate(Request $request){
@@ -216,10 +216,10 @@ class UserController extends Controller
         try{
             $user->update($validated);
         }catch(Exception $e) {
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__('Something Went Wrong! Please Try Again.')]];
             return Helpers::error($error);
         }
-        $message =  ['success'=>['Profile successfully updated!']];
+        $message =  ['success'=>[__('Profile successfully updated!')]];
         return Helpers::onlysuccess($message);
     }
     public function passwordUpdate(Request $request) {
@@ -238,7 +238,7 @@ class UserController extends Controller
             return Helpers::validation($error);
         }
         if(!Hash::check($request->current_password,auth()->user()->password)) {
-            $error = ['error'=>['Current password didn\'t match']];
+            $error = ['error'=>[__('Current password didn\'t match')]];
             return Helpers::error($error);
         }
 
@@ -247,10 +247,10 @@ class UserController extends Controller
                 'password'  => Hash::make($request->password),
             ]);
         }catch(Exception $e) {
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
-        $message =  ['success'=>['Password successfully updated!']];
+        $message =  ['success'=>[__('Password successfully updated!')]];
         return Helpers::onlysuccess($message);
 
     }
@@ -259,10 +259,10 @@ class UserController extends Controller
 
         try{
             $user->delete();
-            $message =  ['success'=>['User deleted successfully']];
+            $message =  ['success'=>[__('User deleted successfully')]];
             return Helpers::onlysuccess($message);
         }catch(Exception $e) {
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again.")]];
             return Helpers::error($error);
         }
 
@@ -300,7 +300,7 @@ class UserController extends Controller
             'transaction_types' => $transaction_types,
             'transactions'=> $transactions,
         ];
-        $message =  ['success'=>['All Transactions']];
+        $message =  ['success'=>[__('All Transactions')]];
         return Helpers::success($data,$message);
     }
 }

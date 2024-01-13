@@ -105,7 +105,7 @@ class WithdrawController extends Controller
                 'gateways'   => $gateways,
                 'transactions'   =>   $transactions,
             ];
-            $message =  ['success'=>['Withdraw Information!']];
+            $message =  ['success'=>[__('Withdraw Information!')]];
             return Helpers::success($data,$message);
 
     }
@@ -122,13 +122,13 @@ class WithdrawController extends Controller
         $user = auth()->user();
         if($basic_setting->kyc_verification){
             if( $user->kyc_verified == 0){
-                $error = ['error'=>['Please submit kyc information!']];
+                $error = ['error'=>[__('Please submit kyc information!')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 2){
-                $error = ['error'=>['Please wait before admin approved your kyc information']];
+                $error = ['error'=>[__('Please wait before admin approved your kyc information')]];
                 return Helpers::error($error);
             }elseif($user->kyc_verified == 3){
-                $error = ['error'=>['Admin rejected your kyc information, Please re-submit again']];
+                $error = ['error'=>[__('Admin rejected your kyc information, Please re-submit again')]];
                 return Helpers::error($error);
             }
         }
@@ -139,12 +139,12 @@ class WithdrawController extends Controller
             $gateway->where('status', 1);
         })->where('alias',$request->gateway)->first();
         if (!$gate) {
-            $error = ['error'=>['Invalid Gateway!']];
+            $error = ['error'=>[__('Invalid Gateway!')]];
             return Helpers::error($error);
         }
         $baseCurrency = Currency::default();
         if (!$baseCurrency) {
-            $error = ['error'=>['Default Currency Not Setup Yet!']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet!')]];
             return Helpers::error($error);
         }
         $amount = $request->amount;
@@ -152,7 +152,7 @@ class WithdrawController extends Controller
         $min_limit =  $gate->min_limit / $gate->rate;
         $max_limit =  $gate->max_limit / $gate->rate;
         if($amount < $min_limit || $amount > $max_limit) {
-            $error = ['error'=>['Please follow the transaction limit!']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         //gateway charge
@@ -168,7 +168,7 @@ class WithdrawController extends Controller
         $reduceAbleTotal = $amount + $base_total_charge;
 
         if( $reduceAbleTotal > $userWallet->balance){
-            $error = ['error'=>['Insufficient Balance On Your Wallet!']];
+            $error = ['error'=>[__('Insufficient Balance On Your Wallet!')]];
             return Helpers::error($error);
         }
 
@@ -223,7 +223,7 @@ class WithdrawController extends Controller
                     'url' => $url??'',
                     'method' => "post",
                     ];
-                    $message =  ['success'=>['Withdraw Money Inserted Successfully']];
+                    $message =  ['success'=>[__('Withdraw Money Inserted Successfully')]];
                     return Helpers::success($data, $message);
             }else{
                 $url = route('api.withdraw.manual.confirmed');
@@ -237,13 +237,13 @@ class WithdrawController extends Controller
                     'url' => $url??'',
                     'method' => "post",
                     ];
-                    $message =  ['success'=>['Withdraw Money Inserted Successfully']];
+                    $message =  ['success'=>[__('Withdraw Money Inserted Successfully')]];
                     return Helpers::success($data, $message);
             }
 
 
         }else{
-            $error = ['error'=>['Something is wrong!']];
+            $error = ['error'=>[__('Something is wrong')]];
             return Helpers::error($error);
         }
     }
@@ -258,14 +258,14 @@ class WithdrawController extends Controller
 
         $track = TemporaryData::where('identifier',$request->trx)->where('type',PaymentGatewayConst::WITHDRAWMONEY)->first();
         if(!$track){
-            $error = ['error'=>["Sorry, your payment information is invalid"]];
+            $error = ['error'=>[__("Sorry, your payment information is invalid")]];
             return Helpers::error($error);
 
         }
         $moneyOutData =  $track->data;
         $gateway = PaymentGateway::where('id', $moneyOutData->gateway_id)->first();
         if($gateway->type != "MANUAL"){
-            $error = ['error'=>["Invalid request, it is not manual gateway request"]];
+            $error = ['error'=>[__("Invalid request, it is not manual gateway request")]];
             return Helpers::error($error);
         }
         $payment_fields = $gateway->input_fields ?? [];
@@ -284,10 +284,10 @@ class WithdrawController extends Controller
                 $this->insertChargesManual($moneyOutData,$inserted_id);
                 $this->insertDeviceManual($moneyOutData,$inserted_id);
                 $track->delete();
-                $message =  ['success'=>['Withdraw Money Request Send To Admin Successful']];
+                $message =  ['success'=>[__('Withdraw Money Request Send To Admin Successful')]];
                 return Helpers::onlysuccess($message);
             }catch(Exception $e) {
-                $error = ['error'=>["Sorry,Something is wrong"]];
+                $error = ['error'=>[__("Sorry,Something is wrong")]];
                 return Helpers::error($error);
             }
 
@@ -326,7 +326,7 @@ class WithdrawController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>["Sorry,something is wrong"]];
+            $error = ['error'=>[__("Sorry,something is wrong")]];
             return Helpers::error($error);
         }
         return $id;
@@ -367,7 +367,7 @@ class WithdrawController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>["Sorry,something is wrong"]];
+            $error = ['error'=>[__("Sorry,something is wrong")]];
             return Helpers::error($error);
         }
     }
@@ -398,7 +398,7 @@ class WithdrawController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>["Sorry,something is wrong"]];
+            $error = ['error'=>[__("Sorry,Something is wrong")]];
             return Helpers::error($error);
         }
     }

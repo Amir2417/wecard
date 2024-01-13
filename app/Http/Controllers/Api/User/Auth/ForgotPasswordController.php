@@ -30,7 +30,7 @@ class ForgotPasswordController extends Controller
         if(check_email($request->email)) $column = "email";
         $user = User::where($column,$request->email)->first();
         if(!$user) {
-            $error = ['error'=>["User doesn't exists."]];
+            $error = ['error'=>[__("User doesn't exists.")]];
             return Helpers::error($error);
         }
         $token = generate_unique_string("user_password_resets","token",80);
@@ -46,11 +46,11 @@ class ForgotPasswordController extends Controller
             ]);
             $user->notify(new PasswordResetEmail($user,$password_reset));
         }catch(Exception $e) {
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__('Something went worng! Please try again')]];
             return Helpers::error($error);
         }
 
-        $message =  ['success'=>['Varification code sent to your email address']];
+        $message =  ['success'=>[__('Varification code sent to your email address')]];
         return Helpers::onlysuccess($message);
     }
     public function verifyCode(Request $request)
@@ -67,7 +67,7 @@ class ForgotPasswordController extends Controller
         $otp_exp_seconds = $basic_settings->otp_exp_seconds ?? 0;
         $password_reset = UserPasswordReset::where("code", $code)->first();
         if(!$password_reset) {
-            $error = ['error'=>['Verification Otp is Invalid']];
+            $error = ['error'=>[__('Verification Otp is Invalid')]];
             return Helpers::error($error);
         }
         if(Carbon::now() >= $password_reset->created_at->addSeconds($otp_exp_seconds)) {
@@ -76,11 +76,11 @@ class ForgotPasswordController extends Controller
                     $item->delete();
                 }
             }
-            $error = ['error'=>['Session expired. Please try again']];
+            $error = ['error'=>[__('Session expired. Please try again')]];
             return Helpers::error($error);
         }
 
-        $message =  ['success'=>['Your verification is successful, Now you can recover your password']];
+        $message =  ['success'=>[__('Your verification is successful, Now you can recover your password')]];
         return Helpers::onlysuccess($message);
     }
     public function resetPassword(Request $request) {
@@ -110,10 +110,10 @@ class ForgotPasswordController extends Controller
             ]);
             $password_reset->delete();
         }catch(Exception $e) {
-            $error = ['error'=>['Something went worng! Please try again']];
+            $error = ['error'=>[__('Something went worng! Please try again')]];
             return Helpers::error($error);
         }
-        $message =  ['success'=>['Password reset success. Please login with new password.']];
+        $message =  ['success'=>[__('Password reset success. Please login with new password.')]];
         return Helpers::onlysuccess($message);
     }
 

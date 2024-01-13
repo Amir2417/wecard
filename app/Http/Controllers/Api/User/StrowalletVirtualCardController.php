@@ -111,7 +111,7 @@ class StrowalletVirtualCardController extends Controller
             'cardCharge'=>(object)$cardCharge,
             'transactions'   => $transactions,
             ];
-            $message =  ['success'=>['Virtual Card']];
+            $message =  ['success'=>[__('Virtual Card')]];
             return Helpers::success($data,$message);
     }
     //charge
@@ -145,7 +145,7 @@ class StrowalletVirtualCardController extends Controller
             'cardCharge'=>(object)$cardCharge,
             'fundCharge'=>(object)$fundCharge
             ];
-            $message =  ['success'=>['Fess & Charges']];
+            $message =  ['success'=>[__('Fess & Charges')]];
             return Helpers::success($data,$message);
 
     }
@@ -162,7 +162,7 @@ class StrowalletVirtualCardController extends Controller
         $user = auth()->user();
         $myCard = StrowalletVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$myCard){
-            $error = ['error'=>['Sorry, card not found!']];
+            $error = ['error'=>[__('Sorry, Card Not Found!')]];
             return Helpers::error($error);
         }
         $myCards = StrowalletVirtualCard::where('card_id',$card_id)->where('user_id',$user->id)->get()->map(function($data){
@@ -198,7 +198,7 @@ class StrowalletVirtualCardController extends Controller
             'user'=>   $user,
 
             ];
-            $message =  ['success'=>['Virtual Card Details']];
+            $message =  ['success'=>[__('Virtual Card Details')]];
             return Helpers::success($data,$message);
     }
     // card transactions
@@ -243,7 +243,7 @@ class StrowalletVirtualCardController extends Controller
         curl_close($curl);
         $result  = json_decode($response, true);
 
-        $message = ['success' => ['Virtual Card Transactions']];
+        $message = ['success' => [__('Virtual Card Transactions')]];
         return Helpers::success($result['response'], $message);
     }
     //card block
@@ -260,7 +260,7 @@ class StrowalletVirtualCardController extends Controller
         $status = 'freeze';
         $card = StrowalletVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error = ['error'=>['Sorry, invalid request!']];
+            $error = ['error'=>[__('Sorry, invalid request!')]];
             return Helpers::error($error);
         }
 
@@ -281,7 +281,7 @@ class StrowalletVirtualCardController extends Controller
             if ($data['status'] == 'true') {
                 $card->is_active = 0;
                 $card->save();
-                $message =  ['success'=>['Card block successfully!']];
+                $message =  ['success'=>[__('Card Block Successfully!')]];
                 return Helpers::onlysuccess($message);
             }
         }
@@ -301,7 +301,7 @@ class StrowalletVirtualCardController extends Controller
         $status     = 'unfreeze';
         $card       = StrowalletVirtualCard::where('user_id',$user->id)->where('card_id',$card_id)->first();
         if(!$card){
-            $error  = ['error'=>['Sorry, invalid request!']];
+            $error  = ['error'=>[__('Sorry, invalid request!')]];
             return Helpers::error($error);
         }
         $client         = new \GuzzleHttp\Client();
@@ -320,7 +320,7 @@ class StrowalletVirtualCardController extends Controller
         if (isset($data['status'])) {
             $card->is_active = 1;
             $card->save();
-            $message =  ['success'=>['Card unblock successfully!']];
+            $message =  ['success'=>[__('Card Unblock Successfully!')]];
             return Helpers::onlysuccess($message);
         }else{
             $error = ['error' => $data['message']];
@@ -360,20 +360,20 @@ class StrowalletVirtualCardController extends Controller
         $basic_setting = BasicSettings::first();
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            $error = ['error'=>['Wallet not found']];
+            $error = ['error'=>[__('Wallet Not Found')]];
             return Helpers::error($error);
         }
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
-            $error = ['error'=>['Default currency not setup yet']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet')]];
             return Helpers::error($error);
         }
         $minLimit =  $cardCharge->min_limit *  $rate;
         $maxLimit =  $cardCharge->max_limit *  $rate;
         if($amount < $minLimit || $amount > $maxLimit) {
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         //charge calculations
@@ -382,7 +382,7 @@ class StrowalletVirtualCardController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            $error = ['error'=>['Sorry, insufficient balance']];
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
             return Helpers::error($error);
         }
         
@@ -391,7 +391,7 @@ class StrowalletVirtualCardController extends Controller
             $createCustomer     = stro_wallet_create_user($user,$formData,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
             
             if( $createCustomer['status'] == false){
-                $error = ['error'=>["Customer doesn't created properly,Contact Follow the instruction"]];
+                $error = ['error'=>[__("Customer doesn't created properly,Contact with owner")]];
                 return Helpers::error($error);
             }
             $user->strowallet_customer =   (object)$createCustomer['data'];
@@ -406,18 +406,18 @@ class StrowalletVirtualCardController extends Controller
         $customer_email = $user->strowallet_customer->customerEmail;
         $customer_card  = StrowalletVirtualCard::where('customer_email',$customer_email)->count();
         if($customer_card > 3){
-            $error = ['error'=>["Sorry! You can not create more than three card using the same email address."]];
+            $error = ['error'=>[__("Sorry! You can not create more than three card using the same email address.")]];
             return Helpers::error($error);
         }else{
 
             $created_card = create_strowallet_virtual_card($user,$request->card_amount,$customer,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
             if($created_card['status'] == false){
-                return back()->with(['error' => [$created_card['message'] ?? "Card Creation Failed!"]]);
+                return back()->with(['error' => [$created_card['message'] ?? __("Card Creation Failed!")]]);
             }
             $card_id    = $created_card['data']->card_id;
             $card_details   = card_details($card_id,$this->api->config->strowallet_public_key,$this->api->config->strowallet_url);
             if( $card_details['status'] == false){
-                $error = ['error'=>["No Card Found!"]];
+                $error = ['error'=>[__("No Card Found!")]];
                 return Helpers::error($error);
             }
 
@@ -448,12 +448,12 @@ class StrowalletVirtualCardController extends Controller
             try{
                 $sender = $this->insertCardBuy( $trx_id,$user,$wallet,$amount, $strowallet_card ,$payable);
                 $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$strowallet_card->card_number);
-                $message =  ['success'=>['Card Successfully Buy']];
+                $message =  ['success'=>[__('Buy Card Successfully')]];
                 return Helpers::onlysuccess($message);
                 
             }catch(Exception $e){
                 
-                $error =  ['error'=>['Something Went Wrong! Please Try Again.']];
+                $error =  ['error'=>[__("Something Went Wrong! Please Try Again.")]];
                 return Helpers::error($error);
             }
         }
@@ -550,14 +550,14 @@ class StrowalletVirtualCardController extends Controller
         $amount = $request->fund_amount;
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            $error = ['error'=>['Wallet not found']];
+            $error = ['error'=>[__('Wallet Not Found')]];
             return Helpers::error($error);
         }
         $cardCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
-            $error = ['error'=>['Default currency not setup yet']];
+            $error = ['error'=>[__('Default Currency Not Setup Yet')]];
             return Helpers::error($error);
         }
         $fixedCharge = $cardCharge->fixed_charge *  $rate;
@@ -565,7 +565,7 @@ class StrowalletVirtualCardController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            $error = ['error'=>['Please follow the transaction limit']];
+            $error = ['error'=>[__('Please follow the transaction limit')]];
             return Helpers::error($error);
         }
         
@@ -595,12 +595,12 @@ class StrowalletVirtualCardController extends Controller
             $trx_id = 'CF'.getTrxNum();
             $sender = $this->insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable);
             $this->insertFundCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$myCard->card_number,$amount);
-            $message =  ['success'=>['Card Funded Successfully']];
+            $message =  ['success'=>[__('Card Funded Successfully')]];
             return Helpers::onlysuccess($message);
 
         }else{
             
-            $error = ['error'=>[@$decodedResult['message']??'Please wait a moment & try again later.']];
+            $error = ['error'=>[@$decodedResult['message']??__('Please wait a moment & try again later.')]];
             return Helpers::error($error);
         }
 

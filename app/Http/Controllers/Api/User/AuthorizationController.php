@@ -27,7 +27,7 @@ class AuthorizationController extends Controller
         if( $resend){
             if(Carbon::now() <= $resend->created_at->addMinutes(GlobalConst::USER_VERIFY_RESEND_TIME_MINUTE)) {
 
-                $error = ['error'=>['You can resend verification code after '.Carbon::now()->diffInSeconds($resend->created_at->addMinutes(GlobalConst::USER_VERIFY_RESEND_TIME_MINUTE)). ' seconds']];
+                $error = ['error'=>[__('You can resend verification code after').Carbon::now()->diffInSeconds($resend->created_at->addMinutes(GlobalConst::USER_VERIFY_RESEND_TIME_MINUTE)). ' seconds']];
                 return Helpers::error($error);
             }
         }
@@ -46,11 +46,11 @@ class AuthorizationController extends Controller
             DB::table("user_authorizations")->insert($data);
             $user->notify(new SendAuthorizationCode((object) $data));
             DB::commit();
-            $message =  ['success'=>['Verification code send success']];
+            $message =  ['success'=>[__('Verification code send success')]];
             return Helpers::onlysuccess($message);
         }catch(Exception $e) {
             DB::rollBack();
-            $error = ['error'=>['Something went wrong! Please try again']];
+            $error = ['error'=>[__('Something went wrong! Please try again.')]];
             return Helpers::error($error);
         }
     }
@@ -69,11 +69,11 @@ class AuthorizationController extends Controller
         $auth_column = UserAuthorization::where("user_id",$user->id)->where("code",$code)->first();
 
         if(!$auth_column){
-             $error = ['error'=>['Verification code does not match']];
+             $error = ['error'=>[__('Verification code does not match')]];
             return Helpers::error($error);
         }
         if($auth_column->created_at->addSeconds($otp_exp_sec) < now()) {
-            $error = ['error'=>['Session expired. Please try again']];
+            $error = ['error'=>[__('Session expired. Please try again')]];
             return Helpers::error($error);
         }
         try{
@@ -82,10 +82,10 @@ class AuthorizationController extends Controller
             ]);
             $auth_column->delete();
         }catch(Exception $e) {
-            $error = ['error'=>['Something went wrong! Please try again']];
+            $error = ['error'=>[__('Something went wrong! Please try again.')]];
             return Helpers::error($error);
         }
-        $message =  ['success'=>['Account successfully verified']];
+        $message =  ['success'=>[__('Account successfully verified')]];
         return Helpers::onlysuccess($message);
     }
 
@@ -105,13 +105,13 @@ class AuthorizationController extends Controller
         ];
 
 
-        $message = ['success' => ['You are already KYC Verified User']];
+        $message = ['success' => [__('You are already KYC Verified User')]];
         if($user->kyc_verified == GlobalConst::VERIFIED) return Helpers::success($data,$message);
-        $message = ['success' => ['Your KYC information is submitted. Please wait for admin confirmation']];
+        $message = ['success' => [__('Your KYC information is submitted. Please wait for admin confirmation')]];
         if($user->kyc_verified == GlobalConst::PENDING) return Helpers::success($data,$message);
-        $message = ['success' => ['User KYC section is under maintenance']];
+        $message = ['success' => [__('User KYC section is under maintenance')]];
         if(!$user_kyc) return Helpers::success($data,$message);
-        $message = ['success' => ['User KYC input fields fetch successfully!']];
+        $message = ['success' => [__('User KYC input fields fetch successfully!')]];
 
 
         return Helpers::success($data, $message);
@@ -120,7 +120,7 @@ class AuthorizationController extends Controller
 
     public function KycSubmit(Request $request) {
         $user = auth()->guard(get_auth_guard())->user();
-        if($user->kyc_verified == GlobalConst::VERIFIED) return Response::warning(['You are already KYC Verified User'],[],400);
+        if($user->kyc_verified == GlobalConst::VERIFIED) return Response::warning([__('You are already KYC Verified User')],[],400);
 
         $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
         $validation_rules = $this->generateValidationRules($user_kyc_fields);
@@ -147,10 +147,10 @@ class AuthorizationController extends Controller
                 'kyc_verified'  => GlobalConst::DEFAULT,
             ]);
             $this->generatedFieldsFilesDelete($get_values);
-            return Response::error(['Something went wrong! Please try again'],[],500);
+            return Response::error([__('Something went wrong! Please try again.')],[],500);
         }
 
-        return Response::success(['KYC information successfully submitted'],[],200);
+        return Response::success([__('KYC information successfully submitted')],[],200);
     }
 
 

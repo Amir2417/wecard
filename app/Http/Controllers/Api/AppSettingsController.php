@@ -62,7 +62,7 @@ class AppSettingsController extends Controller
             "logo_image_path"       => "public/backend/images/web-settings/image-assets"
 
         ];
-        $message =  ['success'=>['Data fetched successfully']];
+        $message =  ['success'=>[__('Data fetched successfully')]];
         return Helpers::success($data,$message);
 
     }
@@ -77,7 +77,7 @@ class AppSettingsController extends Controller
         $data =[
             'languages' => $api_languages,
         ];
-        $message =  ['success'=>['Language Data Fetch Successfully!']];
+        $message =  ['success'=>[__('Language Data Fetch Successfully!')]];
         return Helpers::success($data,$message);
     }
 }
