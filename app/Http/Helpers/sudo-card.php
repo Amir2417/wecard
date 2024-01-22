@@ -5,8 +5,46 @@
 use App\Models\VirtualCardApi;
 
 
+function funding_source_create($api_key,$base_url){
+    $url = $base_url.'/fundingsources';
+    $data = ['type' => 'default', 'status' => 'active'];
+
+    $headers = [
+        "Authorization: Bearer ".$api_key,
+        "accept: application/json",
+        'Content-Type: application/json',
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $result = json_decode($response,true);
+
+    if(isset($result['statusCode'])){
+        if($result['statusCode'] == 200){
+            $data =[
+                'status' => true,
+                'message' =>" SuccessFully Create Founding Source",
+                'data' => $result['data'],
+           ];
+
+        }else{
+            $data =[
+                'status' => false,
+                'message' =>$result['message']??'',
+                'data' => [],
+           ];
+        }
+
+    }
+    return  $data;
+}
 function get_funding_source($api_key,$base_url){
-    
     $curl = curl_init();
     curl_setopt_array($curl, [
     CURLOPT_URL => $base_url."/fundingsources",
@@ -22,7 +60,6 @@ function get_funding_source($api_key,$base_url){
     ],
     ]);
     $response = curl_exec($curl);
-    
     $err = curl_error($curl);
     curl_close($curl);
     if ($err) {
@@ -93,13 +130,17 @@ function get_sudo_accounts($api_key,$base_url){
     
     if ($result['statusCode'] != 200) {
         $result = json_decode( $response,true);
+        
         return  $result;
     } else {
         $result = json_decode( $response,true);
+        
         $account_type = 'account';
         $filteredArray = array_filter($result['data'], function($item) use ($account_type) {
+            
             return $item['type'] === $account_type;
         });
+        
         return  $filteredArray??[];
     }
 }
@@ -156,8 +197,7 @@ function create_sudo_customer($api_key,$base_url,$user){
         return  $result;
     }
 }
-function create_virtual_card($api_key,$base_url,$customerId, $currency,$bankCode, $debitAccountId, $issuerCountry){
-
+function create_virtual_card($amount,$api_key,$base_url,$customerId, $currency,$bankCode, $debitAccountId, $issuerCountry){
     $curl = curl_init();
     curl_setopt_array($curl, [
         CURLOPT_URL => $base_url."/cards",
@@ -173,7 +213,7 @@ function create_virtual_card($api_key,$base_url,$customerId, $currency,$bankCode
             'status' => 'active',
             'brand' =>"MasterCard",
             'issuerCountry' => $issuerCountry,
-            'amount' => 100,
+            'amount' => $amount,
             'customerId' => $customerId,
             'bankCode' => $bankCode,
             'debitAccountId' =>$debitAccountId
@@ -187,7 +227,6 @@ function create_virtual_card($api_key,$base_url,$customerId, $currency,$bankCode
 
     $response = curl_exec($curl);
     $err = curl_error($curl);
-
     curl_close($curl);
 
     if ($err) {

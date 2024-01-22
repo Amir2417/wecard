@@ -30,7 +30,7 @@ class SudoVirtualCardController extends Controller
     public function index()
     {
 
-        $page_title = "Virtual Card";
+        $page_title = __("Virtual Card");
         $myCards = SudoVirtualCard::where('user_id',auth()->user()->id)->get();
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $transactions = Transaction::auth()->virtualCard()->latest()->take(5)->get();
@@ -42,7 +42,7 @@ class SudoVirtualCardController extends Controller
     }
     public function cardDetails($card_id)
     {
-        $page_title = "Card Details";
+        $page_title = __("Card Details");
         $myCard = SudoVirtualCard::where('card_id',$card_id)->first();
         $cardToken = getCardToken($this->api->config->sudo_api_key,$this->api->config->sudo_url,$myCard->card_id);
         if($cardToken['statusCode'] == 200){
@@ -75,12 +75,12 @@ class SudoVirtualCardController extends Controller
             }
 
         }catch(Exception $e) {
-            return back()->with(['error' => ['Something went wrong! Please try again']]);
+            return back()->with(['error' => [__('Something went wrong! Please try again')]]);
         }
-        return back()->with(['success' => ['Status Updated Successfully!']]);
+        return back()->with(['success' => [__('Status Updated Successfully')]]);
     }
     public function cardTransaction($card_id) {
-        $page_title = "Virtual Card Transaction ";
+        $page_title = __("Virtual Card Transactions");
         $user = auth()->user();
         $card = SudoVirtualCard::where('user_id',$user->id)->where('card_id', $card_id)->first();
         $card_truns =  getCardTransactions($this->api->config->sudo_api_key,$this->api->config->sudo_url,$card->card_id);
@@ -100,7 +100,7 @@ class SudoVirtualCardController extends Controller
             $card = SudoVirtualCard::where('id',$request->data_target)->where('status',1)->first();
             $status = 'inactive';
             if(!$card){
-                $error = ['error' => ['Something is wrong in your card']];
+                $error = ['error' => [__('Sorry,This Card Is Already Inactive')]];
                 return Response::error($error,null,404);
             }
             $result = cardUpdate($this->api->config->sudo_api_key,$this->api->config->sudo_url,$card->card_id,$status);
@@ -108,7 +108,7 @@ class SudoVirtualCardController extends Controller
                 if($result['statusCode'] == 200){
                     $card->status = false;
                     $card->save();
-                    $success = ['success' => [' Card block successfully']];
+                    $success = ['success' => [__('Card Inactive Successfully!')]];
                     return Response::success($success,null,200);
                 }elseif($result['statusCode'] != 200){
                     $success = ['error' => [$result['message']??"Something is wrong"]];
@@ -119,7 +119,7 @@ class SudoVirtualCardController extends Controller
         $card = SudoVirtualCard::where('id',$request->data_target)->where('status',0)->first();
         $status = 'active';
         if(!$card){
-            $error = ['error' => ['Something is wrong in your card']];
+            $error = ['error' => [__('Something is wrong in your card')]];
             return Response::error($error,null,404);
         }
         $result = cardUpdate($this->api->config->sudo_api_key,$this->api->config->sudo_url,$card->card_id,$status);
@@ -127,7 +127,7 @@ class SudoVirtualCardController extends Controller
             if($result['statusCode'] == 200){
                 $card->status = true;
                 $card->save();
-                $success = ['success' => [' Card unblock successfully']];
+                $success = ['success' => [__('Card Active Successfully!')]];
                 return Response::success($success,null,200);
             }elseif($result['statusCode'] != 200){
                 $success = ['error' => [$result['message']??"Something is wrong"]];
@@ -137,7 +137,8 @@ class SudoVirtualCardController extends Controller
 
         }
     }
-    public function cardBuy(Request $request){
+    public function cardBuy(Request $request)
+    {
         $request->validate([
             'card_amount' => 'required|numeric|gt:0',
         ]);
@@ -145,28 +146,28 @@ class SudoVirtualCardController extends Controller
         $user = auth()->user();
         if($basic_setting->kyc_verification){
             if( $user->kyc_verified == 0){
-                return redirect()->route('user.profile.index')->with(['error' => ['Please submit kyc information']]);
+                return redirect()->route('user.profile.index')->with(['error' => [__('Please submit kyc information!')]]);
             }elseif($user->kyc_verified == 2){
-                return redirect()->route('user.profile.index')->with(['error' => ['Please wait before admin approved your kyc information']]);
+                return redirect()->route('user.profile.index')->with(['error' => [__('Please wait before admin approved your kyc information')]]);
             }elseif($user->kyc_verified == 3){
-                return redirect()->route('user.profile.index')->with(['error' => ['Admin rejected your kyc information, Please re-submit again']]);
+                return redirect()->route('user.profile.index')->with(['error' => [__('Admin rejected your kyc information, Please re-submit again')]]);
             }
         }
-        $amount = $request->card_amount;
+        $amount = (float) $request->card_amount;
         $wallet = UserWallet::where('user_id',$user->id)->first();
         if(!$wallet){
-            return back()->with(['error' => ['Wallet not found']]);
+            return back()->with(['error' => [__('User wallet not found')]]);
         }
         $cardCharge = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $baseCurrency = Currency::default();
         $rate = $baseCurrency->rate;
         if(!$baseCurrency){
-            return back()->with(['error' => ['Default currency not setup yet']]);
+            return back()->with(['error' => [ __('Default Currency Not Setup Yet')]]);
         }
         $minLimit =  $cardCharge->min_limit *  $rate;
         $maxLimit =  $cardCharge->max_limit *  $rate;
         if($amount < $minLimit || $amount > $maxLimit) {
-            return back()->with(['error' => ['Please follow the transaction limit']]);
+            return back()->with(['error' => [__('Please follow the transaction limit')]]);
         }
         //charge calculations
         $fixedCharge = $cardCharge->fixed_charge *  $rate;
@@ -174,12 +175,15 @@ class SudoVirtualCardController extends Controller
         $total_charge = $fixedCharge + $percent_charge;
         $payable = $total_charge + $amount;
         if($payable > $wallet->balance ){
-            return back()->with(['error' => ['Sorry, insufficient balance']]);
+            return back()->with(['error' => [__('Sorry, insufficient balance')]]);
         }
         $currency = $baseCurrency->code;
-        
+        $supported_currency = ['USD','NGN'];
+        if( !in_array($currency,$supported_currency??[])){
+            return back()->with(['error' => [$currency." ". __("Currency doesn't supported for creating virtual card, Please contact")]]);
+
+        }
         $funding_sources =  get_funding_source( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
-        
         if(isset( $funding_sources['statusCode'])){
             if($funding_sources['statusCode'] == 403){
                 return back()->with(['error' => [$funding_sources['message']]]);
@@ -187,18 +191,25 @@ class SudoVirtualCardController extends Controller
                 return back()->with(['error' => [$funding_sources['message']]]);
             }
         }
-        $supported_currency = ['USD','NGN'];
-        if( !in_array($currency,$supported_currency??[])){
-            return back()->with(['error' => [$currency." Currency doesn't supported for creating virtual card, Please contact"]]);
-
+        $account_type = 'default';
+        $accountTypeArray = array_filter($funding_sources['data'], function($item) use ($account_type) {
+            return $item['type'] === $account_type;
+        });
+        if( count($accountTypeArray) <=  0){
+            $create_founding_source = funding_source_create( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
+            if($create_founding_source['status'] ===  false){
+                return back()->with(['error' => [$create_founding_source['message']]]);
+            }
+            $bankCode = $create_founding_source['data']['_id']??'';
+        }else{
+            $funding_source_id =  array_values($accountTypeArray);
+            $bankCode = $funding_source_id[0]['_id']??'';
         }
-        $bankCode = $funding_sources['data'][0]['_id']??'';
+  	    
         $sudo_accounts =    get_sudo_accounts( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
-        
         $filteredArray = array_filter($sudo_accounts, function($item) use ($currency) {
             return $item['currency'] === $currency;
         });
-        
         $matchingElements = array_values($filteredArray);
         $debitAccountId= $matchingElements[0]['_id']??"";
 
@@ -208,11 +219,10 @@ class SudoVirtualCardController extends Controller
                 //create account
                 $store_account = create_sudo_account($this->api->config->sudo_api_key,$this->api->config->sudo_url, $currency);
                 if( isset($store_account['error'])){
-                    return back()->with(['error' => ["Have't any debit account this currency, Please contact with owner"]]);
+                    return back()->with(['error' => [__("Haven't any debit account this currency, Please contact with owner")]]);
                 }
                 $user->sudo_account =   (object)$store_account['data'];
                 $user->save();
-
             }
         }else{
             $user->sudo_account = (object)$matchingElements[0];
@@ -233,7 +243,7 @@ class SudoVirtualCardController extends Controller
         $store_customer = create_sudo_customer($this->api->config->sudo_api_key,$this->api->config->sudo_url,$user);
 
         if( isset($store_customer['error'])){
-            return back()->with(['error' => ["Customer doesn't created properly,Contact with owner"]]);
+            return back()->with(['error' => [__("Customer doesn't created properly,Contact with owner")]]);
         }
         $user->sudo_customer =   (object)$store_customer['data'];
         $user->save();
@@ -243,14 +253,13 @@ class SudoVirtualCardController extends Controller
         $customerId = $user->sudo_customer->_id;
        }
        //create card now
-       $created_card = create_virtual_card($this->api->config->sudo_api_key,$this->api->config->sudo_url,
+       $created_card = create_virtual_card($amount,$this->api->config->sudo_api_key,$this->api->config->sudo_url,
                             $customerId, $currency,$bankCode, $debitAccountId, $issuerCountry
                         );
        if(isset($created_card['statusCode'])){
         if($created_card['statusCode'] == 400){
             return back()->with(['error' => [$created_card['message']]]);
         }
-
 
        }
        if($created_card['statusCode']  = 200){
@@ -281,17 +290,28 @@ class SudoVirtualCardController extends Controller
             try{
                 $sender = $this->insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable);
                 $this->insertBuyCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$v_card->maskedPan);
-                
-                return redirect()->route("user.sudo.virtual.card.index")->with(['success' => ['Card Successfully Buy']]);
+                if( $basic_setting->email_notification == true){
+                $notifyDataSender = [
+                    'trx_id'  => $trx_id,
+                    'title'  => "Virtual Card (Buy Card)",
+                    'request_amount'  => getAmount($amount,4).' '.get_default_currency_code(),
+                    'payable'   =>  getAmount($payable,4).' ' .get_default_currency_code(),
+                    'charges'   => getAmount( $total_charge, 2).' ' .get_default_currency_code(),
+                    'card_amount'  => getAmount( $v_card->amount, 2).' ' .get_default_currency_code(),
+                    'card_pan'  => $v_card->maskedPan,
+                    'status'  => "Success",
+                  ];
+                }
+                return redirect()->route("user.sudo.virtual.card.index")->with(['success' => [__('Buy Card Successfully')]]);
             }catch(Exception $e){
-                return back()->with(['error' => [$e->getMessage()]]);
+                return back()->with(['error' => [__("Something Went Wrong! Please Try Again")]]);
             }
 
        }
 
     }
     //card buy helper
-    public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable) {
+     public function insertCadrBuy( $trx_id,$user,$wallet,$amount, $v_card ,$payable) {
         $trx_id = $trx_id;
         $authWallet = $wallet;
         $afterCharge = ($authWallet->balance - $payable);
@@ -320,7 +340,7 @@ class SudoVirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            throw new Exception($e->getMessage());
+            throw new Exception(__("Something Went Wrong! Please Try Again"));
         }
         return $id;
     }
@@ -338,8 +358,8 @@ class SudoVirtualCardController extends Controller
 
             //notification
             $notification_content = [
-                'title'         =>"Buy Card ",
-                'message'       => "Buy card successful ".$masked_card,
+                'title'         =>__("Buy Card"),
+                'message'       => __('Buy card successful ')." ".$masked_card,
                 'image'         => files_asset_path('profile-default'),
             ];
 
@@ -351,7 +371,7 @@ class SudoVirtualCardController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            throw new Exception($e->getMessage());
+            throw new Exception(__("Something Went Wrong! Please Try Again"));
         }
     }
     //update user balance

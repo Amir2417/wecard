@@ -65,7 +65,6 @@
                                 <div class="user-info">
                                     <h2 class="user-count">{{  get_default_currency_symbol() }}{{getAmount(getSudoBalance()['amount'],2)}}</h2>
                                 </div>
-
                             </div>
                             @endif
                             <div class="right">

@@ -379,6 +379,13 @@ class SudoVirtualCardController extends Controller
             return Helpers::error($error);
         }
         $currency = $baseCurrency->code;
+        
+        $supported_currency = ['USD','NGN'];
+        if( !in_array($currency,$supported_currency??[])){
+            $error = ['error'=>[$currency." Currency doesn't supported for creating virtual card, Please contact"]];
+            return Helpers::error($error);
+
+        }
         $funding_sources =  get_funding_source( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
         if(isset( $funding_sources['statusCode'])){
             if($funding_sources['statusCode'] == 403){
@@ -389,13 +396,23 @@ class SudoVirtualCardController extends Controller
                 return Helpers::error($error);
             }
         }
-        $supported_currency = ['USD','NGN'];
-        if( !in_array($currency,$supported_currency??[])){
-            $error = ['error'=>[$currency." Currency doesn't supported for creating virtual card, Please contact"]];
-            return Helpers::error($error);
 
+        $account_type = 'default';
+        $accountTypeArray = array_filter($funding_sources['data'], function($item) use ($account_type) {
+            return $item['type'] === $account_type;
+        });
+        if( count($accountTypeArray) <=  0){
+            $create_founding_source = funding_source_create( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
+            if($create_founding_source['status'] ===  false){
+                $error = ['error'=>[$create_founding_source['message']]];
+                return Helpers::error($error);
+            }
+            $bankCode = $create_founding_source['data']['_id']??'';
+        }else{
+            $funding_source_id =  array_values($accountTypeArray);
+            $bankCode = $funding_source_id[0]['_id']??'';
         }
-        $bankCode = $funding_sources['data'][0]['_id']??'';
+
 
         $sudo_accounts =    get_sudo_accounts( $this->api->config->sudo_api_key,$this->api->config->sudo_url);
         $filteredArray = array_filter($sudo_accounts, function($item) use ($currency) {
@@ -447,9 +464,11 @@ class SudoVirtualCardController extends Controller
         $customerId = $user->sudo_customer->_id;
        }
        //create card now
-       $created_card = create_virtual_card($this->api->config->sudo_api_key,$this->api->config->sudo_url,
+       $created_card = create_virtual_card($amount,$this->api->config->sudo_api_key,$this->api->config->sudo_url,
                             $customerId, $currency,$bankCode, $debitAccountId, $issuerCountry
                         );
+
+                        
        if(isset($created_card['statusCode'])){
         if($created_card['statusCode'] == 400){
             $error = ['error'=>[$created_card['message']]];
