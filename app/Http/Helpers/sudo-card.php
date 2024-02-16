@@ -385,7 +385,102 @@ function getSudoBalance(){
         }
 
     }
+}
+function getSudoCard($card_id){
+    $method = VirtualCardApi::first();
+    $apiUrl = $method->config->sudo_url.'/'.'cards/'.$card_id;
+    $apiKey = $method->config->sudo_api_key;
+    $ch = curl_init($apiUrl);
+    // Set cURL options
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $apiKey,
+        'Accept: application/json',
+    ]);
+    // Execute cURL session and get the response
+    $response = curl_exec($ch);
+    // Close cURL session
+    curl_close($ch);
+    $result = json_decode( $response,true);
+    dd($result);
+    if(isset($result['statusCode'])){
+        if($result['statusCode'] == 200){
+            $data =[
+                'data' => $result['data'],
+                'status' => true,
+                'message' =>"Card fetched successfully.",
+           ];
+        }else{
+            $data =[
+                'data' => [],
+                'status' => false,
+                'message' =>__("Something Went Wrong! Please Try Again"),
+           ];
+        }
 
+    }
+    return $data;
 
+}
+function sudoFundCard($card_account_number,$amount){
+    $method = VirtualCardApi::first();
+    $currency = get_default_currency_code();
+    $apiUrl = $method->config->sudo_url.'/accounts/transfer';
+    $apiKey = $method->config->sudo_api_key;
+    $sudo_accounts = get_sudo_accounts( $method->config->sudo_api_key,$method->config->sudo_url);
+    $filteredArray = array_filter($sudo_accounts, function($item) use ($currency) {
+        return $item['currency'] === $currency;
+    });
+    $matchingElements = array_values($filteredArray);
+    if( $matchingElements == [] || $matchingElements == null || $matchingElements == ""){
+        $data =[
+            'data' => [],
+            'status' => false,
+            'message' =>__("Something Went Wrong! Please Try Again"),
+        ];
+        return $data;
+     }
+
+    $data = [
+        'debitAccountId' => $matchingElements[0]['_id'],
+        'creditAccountId' => $card_account_number,
+        'beneficiaryBankCode' => '',
+        'amount' => $amount,
+        'paymentReference' => getTrxNum(),
+    ];
+
+    $ch = curl_init($apiUrl);
+
+    // Set cURL options
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $apiKey,
+        'Accept: application/json',
+        'Content-Type: application/json',
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $result = json_decode( $response,true);
+
+    if(isset($result['statusCode'])){
+        if($result['statusCode'] == 200){
+            $data =[
+                'data' => $result['data'],
+                'status' => true,
+                'message' =>"Approved or completed successfully",
+           ];
+        }else{
+            $data =[
+                'data' => [],
+                'status' => false,
+                'message' =>__("Something Went Wrong! Please Try Again"),
+           ];
+        }
+
+    }
+    return $data;
 }
 

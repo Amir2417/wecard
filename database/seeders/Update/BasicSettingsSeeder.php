@@ -17,7 +17,7 @@ class BasicSettingsSeeder extends Seeder
 
     {
         $data = [
-            'web_version'       => "3.0.0"
+            'web_version'       => "3.2.0"
 
         ];
         $basicSettings = BasicSettings::first();

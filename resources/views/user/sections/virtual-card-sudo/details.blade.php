@@ -100,6 +100,14 @@
                         </div>
                     </div>
                     <div class="card-content text-center d-flex justify-content-center mt-3">
+                        <div class="card-details">
+                            <a href="javascript:void(0)" class="fundCardSudo" data-id="{{ $myCard->id }}">
+                                <div class="details-icon">
+                                    <i class="las la-coins"></i>
+                                </div>
+                                <h5 class="title">{{ __("Fund") }}</h5>
+                            </a>
+                        </div>
                         @if($myCard->is_default == true )
                         <div class="card-details">
                             <a href="javascript:void(0)" class="active-deactive-btn" data-id="{{ $myCard->id }}">

@@ -36,7 +36,7 @@ class StripeVirtualController extends Controller
         $cardApi = $this->api;
         return view('user.sections.virtual-card-stripe.index',compact(
             'page_title','myCards','cardApi',
-            'transactions','cardCharge'
+            'transactions','cardCharge', 'cardReloadCharge',
         ));
     }
     public function cardDetails($card_id)

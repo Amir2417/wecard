@@ -44,7 +44,7 @@ class StrowalletVirtualController extends Controller
         
         $cardCharge     = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
         $transactions   = Transaction::auth()->virtualCard()->latest()->take(5)->get();
-        
+        $cardReloadCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
         $cardApi = $this->api;
         
 
@@ -54,7 +54,8 @@ class StrowalletVirtualController extends Controller
             'myCards',
             'transactions',
             'cardCharge',
-            'customer_card'
+            'customer_card',
+            'cardReloadCharge',
             
         ));
     }

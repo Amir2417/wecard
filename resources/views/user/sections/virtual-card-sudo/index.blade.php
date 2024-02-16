@@ -123,7 +123,14 @@
                                     </a>
                                 </div>
                                 @endif
-
+                                <div class="card-details">
+                                    <a href="javascript:void(0)" class="fundCardSudo" data-id="{{ $myCard->id }}">
+                                        <div class="details-icon">
+                                            <i class="las la-coins"></i>
+                                        </div>
+                                        <h5 class="title">{{ __("Fund") }}</h5>
+                                    </a>
+                                </div>
                                 <div class="card-details">
                                     <a href="{{  setRoute('user.sudo.virtual.card.transaction',$myCard->card_id) }}">
                                         <div class="details-icon">

@@ -96,6 +96,7 @@ Route::prefix("user")->name("user.")->group(function(){
             Route::post('make/default/remove/default','makeDefaultOrRemove')->name('make.default.or.remove');
             Route::get('details/{card_id}','cardDetails')->name('details');
             Route::get('transaction/{card_id}','cardTransaction')->name('transaction');
+            Route::post('fund','cardFundConfirm')->name('fund.confirm')->middleware('kyc.verification.guard');
             Route::put('change/status','cardBlockUnBlock')->name('change.status');
         });
     });

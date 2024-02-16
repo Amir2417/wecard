@@ -48,6 +48,8 @@ class CustomServiceProvider extends ServiceProvider
             $view_share['__extensions']                 = Extension::get();
             $view_share['pending_ticket_count']         = UserSupportTicket::pending()->get()->count();
             $view_share['cardCharge']                   = TransactionSetting::where('slug','virtual_card')->where('status',1)->first();
+            $view_share['cardReloadCharge']             = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
+            $view_share['card_limit']                   = VirtualCardApi::first()->card_limit;
             view()->share($view_share);
 
             $this->app->bind(BasicSettingsProvider::class, function () use ($view_share) {
