@@ -580,6 +580,154 @@ class SudoVirtualCardController extends Controller
             return Helpers::error($error);
         }
     }
+
+    public function cardFundConfirm(Request $request){
+        $validator = Validator::make($request->all(), [
+            'card_id' => 'required',
+            'fund_amount' => 'required|numeric|gt:0',
+        ]);
+        if($validator->fails()){
+            $error =  ['error'=>$validator->errors()->all()];
+            return Helpers::validation($error);
+        }
+        $basic_setting = BasicSettings::first();
+        $user = auth()->user();
+        if($basic_setting->kyc_verification){
+            if( $user->kyc_verified == 0){
+                $error = ['error'=>[__('Please submit kyc information!')]];
+                return Helpers::error($error);
+            }elseif($user->kyc_verified == 2){
+                $error = ['error'=>[__('Please wait before admin approved your kyc information')]];
+                return Helpers::error($error);
+            }elseif($user->kyc_verified == 3){
+                $error = ['error'=>[__('Admin rejected your kyc information, Please re-submit again')]];
+                return Helpers::error($error);
+            }
+        }
+        $myCard =  SudoVirtualCard::where('user_id',$user->id)->where('card_id',$request->card_id)->first();
+
+        if(!$myCard){
+            $error = ['error'=>[__('Something is wrong in your card')]];
+            return Helpers::error($error);
+        }
+        $amount = $request->fund_amount;
+        $wallet = UserWallet::where('user_id',$user->id)->first();
+        if(!$wallet){
+            $error = ['error'=>[__('User wallet not found')]];
+            return Helpers::error($error);
+        }
+        $cardCharge = TransactionSetting::where('slug','reload_card')->where('status',1)->first();
+        $baseCurrency = Currency::default();
+        $rate = $baseCurrency->rate;
+        if(!$baseCurrency){
+            $error = ['error'=>[__('Default currency not found')]];
+            return Helpers::error($error);
+        }
+        $minLimit =  $cardCharge->min_limit *  $rate;
+        $maxLimit =  $cardCharge->max_limit *  $rate;
+        if($amount < $minLimit || $amount > $maxLimit) {
+            $error = ['error'=>[__("Please follow the transaction limit")]];
+            return Helpers::error($error);
+        }
+        $fixedCharge = $cardCharge->fixed_charge *  $rate;
+        $percent_charge = ($amount / 100) * $cardCharge->percent_charge;
+        $total_charge = $fixedCharge + $percent_charge;
+        $payable = $total_charge + $amount;
+        if($payable > $wallet->balance ){
+            $error = ['error'=>[__('Sorry, insufficient balance')]];
+            return Helpers::error($error);
+        }
+       
+        $get_card_details =  getSudoCard($myCard->card_id);
+        
+        if($get_card_details['status'] === false){
+            $error = ['error'=>[__('Something is wrong in your card')]];
+            return Helpers::error($error);
+        }
+        $card_account_number =  $get_card_details['data']['account']['_id'];
+        $card_fund_response = sudoFundCard( $card_account_number,(float)$amount);
+        if(!empty($card_fund_response['status'])  && $card_fund_response['status'] === true){
+            //added fund amount to card
+            $myCard->amount += $amount;
+            $myCard->save();
+            $trx_id = 'CF'.getTrxNum();
+            $sender = $this->insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable);
+            $this->insertFundCardCharge( $fixedCharge,$percent_charge, $total_charge,$user,$sender,$myCard->maskedPan,$amount);
+            $message =  ['success'=>[__('Card Funded Successfully')]];
+            return Helpers::onlysuccess($message);
+
+        }else{
+            $error = ['error'=>[@$card_fund_response['message'].' ,'.__('Please Contact With Administration.')]];
+            return Helpers::error($error);
+        }
+    }
+    //card fund helper
+    public function insertCardFund( $trx_id,$user,$wallet,$amount, $myCard ,$payable) {
+        $trx_id = $trx_id;
+        $authWallet = $wallet;
+        $afterCharge = ($authWallet->balance - $payable);
+        $details =[
+            'card_info' =>   $myCard??''
+        ];
+        DB::beginTransaction();
+        try{
+            $id = DB::table("transactions")->insertGetId([
+                'user_id'                       => $user->id,
+                'user_wallet_id'                => $authWallet->id,
+                'payment_gateway_currency_id'   => null,
+                'type'                          => PaymentGatewayConst::VIRTUALCARD,
+                'trx_id'                        => $trx_id,
+                'request_amount'                => $amount,
+                'payable'                       => $payable,
+                'available_balance'             => $afterCharge,
+                'remark'                        => ucwords(remove_speacial_char(PaymentGatewayConst::CARDFUND," ")),
+                'details'                       => json_encode($details),
+                'attribute'                      =>PaymentGatewayConst::RECEIVED,
+                'status'                        => true,
+                'created_at'                    => now(),
+            ]);
+            $this->updateSenderWalletBalance($authWallet,$afterCharge);
+
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again")]];
+            return Helpers::error($error);
+        }
+        return $id;
+    }
+    public function insertFundCardCharge($fixedCharge,$percent_charge, $total_charge,$user,$id,$masked_card,$amount) {
+        DB::beginTransaction();
+        try{
+            DB::table('transaction_charges')->insert([
+                'transaction_id'    => $id,
+                'percent_charge'    => $percent_charge,
+                'fixed_charge'      =>$fixedCharge,
+                'total_charge'      =>$total_charge,
+                'created_at'        => now(),
+            ]);
+            DB::commit();
+
+            //notification
+            $notification_content = [
+                'title'         =>__("Card Fund"),
+                'message'       => __("Card fund successful card")." : ".$masked_card.' '.getAmount($amount,2).' '.get_default_currency_code(),
+                'image'         => files_asset_path('profile-default'),
+            ];
+
+            UserNotification::create([
+                'type'      => NotificationConst::CARD_FUND,
+                'user_id'  => $user->id,
+                'message'   => $notification_content,
+            ]);
+
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            $error = ['error'=>[__("Something Went Wrong! Please Try Again")]];
+            return Helpers::error($error);
+        }
+    }
     //update user balance
     public function updateSenderWalletBalance($authWallet,$afterCharge) {
         $authWallet->update([

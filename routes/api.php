@@ -110,6 +110,7 @@ Route::prefix('user')->group(function(){
                     Route::get('charges','charges');
                     Route::get('details','cardDetails');
                     Route::post('create','cardBuy');
+                    Route::post('fund','cardFundConfirm');
                     Route::get('details','cardDetails');
                     Route::get('transaction','cardTransaction');
                     Route::post('block','cardBlock');

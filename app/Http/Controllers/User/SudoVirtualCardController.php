@@ -405,14 +405,15 @@ class SudoVirtualCardController extends Controller
         if($payable > $wallet->balance ){
             return back()->with(['error' => [__('Sorry, insufficient balance')]]);
         }
+        
         $get_card_details =  getSudoCard($myCard->card_id);
-        dd($get_card_details['status']);
+        
         if($get_card_details['status'] === false){
             return back()->with(['error' => [__("Something is wrong in your card")]]);
         }
         $card_account_number =  $get_card_details['data']['account']['_id'];
-
         $card_fund_response = sudoFundCard( $card_account_number,(float)$amount);
+        
         if(!empty($card_fund_response['status'])  && $card_fund_response['status'] === true){
             //added fund amount to card
             $myCard->amount += $amount;

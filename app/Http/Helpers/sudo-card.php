@@ -110,7 +110,7 @@ function create_sudo_account($api_key,$base_url, $currency){
 function get_sudo_accounts($api_key,$base_url){
     $curl = curl_init();
     curl_setopt_array($curl, [
-    CURLOPT_URL => $base_url."/accounts",
+    CURLOPT_URL => $base_url."/accounts?type=account",
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => "",
     CURLOPT_MAXREDIRS => 10,
@@ -134,10 +134,9 @@ function get_sudo_accounts($api_key,$base_url){
         return  $result;
     } else {
         $result = json_decode( $response,true);
-        
         $account_type = 'account';
+        
         $filteredArray = array_filter($result['data'], function($item) use ($account_type) {
-            
             return $item['type'] === $account_type;
         });
         
@@ -399,10 +398,11 @@ function getSudoCard($card_id){
     ]);
     // Execute cURL session and get the response
     $response = curl_exec($ch);
+    
     // Close cURL session
     curl_close($ch);
     $result = json_decode( $response,true);
-    dd($result);
+    
     if(isset($result['statusCode'])){
         if($result['statusCode'] == 200){
             $data =[
@@ -431,6 +431,7 @@ function sudoFundCard($card_account_number,$amount){
     $filteredArray = array_filter($sudo_accounts, function($item) use ($currency) {
         return $item['currency'] === $currency;
     });
+    
     $matchingElements = array_values($filteredArray);
     if( $matchingElements == [] || $matchingElements == null || $matchingElements == ""){
         $data =[
@@ -448,7 +449,7 @@ function sudoFundCard($card_account_number,$amount){
         'amount' => $amount,
         'paymentReference' => getTrxNum(),
     ];
-
+   
     $ch = curl_init($apiUrl);
 
     // Set cURL options
